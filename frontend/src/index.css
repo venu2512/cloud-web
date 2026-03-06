@@ -62,9 +62,13 @@
   }
 }
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer base {
   * {
-    /* Removed @apply border; to prevent unwanted borders on all elements */
+    /* Removed @apply border; to prevent unwanted borders */
   }
 
   body {
@@ -72,6 +76,7 @@
     font-family: 'Inter', system-ui, sans-serif;
   }
 }
+
 
 @layer utilities {
   .glow-primary {
