@@ -31,7 +31,7 @@ interface CreateServerPayload {
 // ─── API ─────────────────────────────────────────────────────────────────────
 
 const createServer = async (payload: CreateServerPayload) => {
-  const res = await fetch("https://cloud-web-backend.onrender.com/api/vms", {
+  const res = await fetch("https://cloud-nova.onrender.com/api/vms", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
