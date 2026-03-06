@@ -64,9 +64,9 @@
 
 @layer base {
   * {
-    @apply border;
+    /* Removed @apply border; to prevent unwanted borders on all elements */
   }
-}
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
