@@ -11,7 +11,7 @@ const Stats = require("./models/Stats");
 const app = express();
 
 
-// ================= DATABASE =================de
+// ================= DATABASE =================
 connectDB();
 
 
@@ -27,7 +27,10 @@ app.use(limiter);
 
 
 // ================= MIDDLEWARE =================
-app.use(cors());
+app.use(cors({
+  origin: "https://cloud-web-two.vercel.app"
+}));
+
 app.use(express.json());
 
 
