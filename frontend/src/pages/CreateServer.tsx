@@ -31,15 +31,17 @@ interface CreateServerPayload {
 // ─── API ─────────────────────────────────────────────────────────────────────
 
 const createServer = async (payload: CreateServerPayload) => {
-  const res = await fetch("http://localhost:5000/api/vms", {
+  const res = await fetch("https://cloud-web-backend.onrender.com/api/vms", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.message || `Failed to create server (${res.status})`);
   }
+
   return res.json();
 };
 
