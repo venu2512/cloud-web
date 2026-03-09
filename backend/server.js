@@ -4,7 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-
+import cors from "cors";
 const connectDB = require("./config/db");
 const Stats = require("./models/Stats");
 
