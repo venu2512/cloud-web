@@ -24,7 +24,10 @@ app.use(limiter);
 
 // ================= MIDDLEWARE =================
 app.use(cors({
-  origin: "https://cloud-web-two.vercel.app"
+  origin: [
+    "http://localhost:5173",
+    "https://cloud-web-two.vercel.app"
+  ]
 }));
 
 app.use(express.json());
@@ -78,7 +81,7 @@ app.use((req, res) => {
 // ================= START SERVER =================
 const PORT = process.env.PORT || 5000;
 
-connectDB().then(() => {
+
  connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT}`);
