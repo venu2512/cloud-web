@@ -16,7 +16,7 @@ const [otpSent, setOtpSent] = useState(false);
 
   try {
     const res = await fetch(
-      "http://localhost:5000/api/auth/login",
+      "https://cloud-nova.onrender.com/api/auth/login",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -48,7 +48,7 @@ const [otpSent, setOtpSent] = useState(false);
 
   try {
     const res = await fetch(
-      "http://localhost:5000/api/auth/verify-otp",
+      "https://cloud-nova.onrender.com/api/auth/verify-otp",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

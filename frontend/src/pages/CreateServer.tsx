@@ -1,3 +1,4 @@
+import API from "@/config/api";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
@@ -31,9 +32,14 @@ interface CreateServerPayload {
 // ─── API ─────────────────────────────────────────────────────────────────────
 
 const createServer = async (payload: CreateServerPayload) => {
-  const res = await fetch("https://cloud-nova.onrender.com/api/vms", {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/vms`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(payload),
   });
 
