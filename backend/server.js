@@ -11,10 +11,6 @@ const Stats = require("./models/Stats");
 const app = express();
 
 
-// ================= DATABASE =================
-connectDB();
-
-
 // ================= SECURITY =================
 app.use(helmet());
 
@@ -82,6 +78,8 @@ app.use((req, res) => {
 // ================= START SERVER =================
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`✅ Server running on port ${PORT}`);
+  });
 });
