@@ -20,7 +20,7 @@ interface VM {
 
 // ─── API ─────────────────────────────────────────────────────────────────────
 
-const API = "http://localhost:5000/api";
+const API = "https://cloud-nova.onrender.com";
 
 const fetchVMs = async (): Promise<VM[]> => {
   const res = await fetch(`${API}/vms`);
