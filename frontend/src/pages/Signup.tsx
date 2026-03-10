@@ -10,50 +10,55 @@ const Signup = () => {
   const navigate = useNavigate();
 
   const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  e.preventDefault();
+  setLoading(true);
 
-    try {
-      const res = await fetch(`${API}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
+  try {
+   const controller = new AbortController();
+const timeout = setTimeout(() => controller.abort(), 15000); // 15 seconds
 
-      const data = await res.json();
+const res = await fetch(`${API}/api/auth/register`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ name, email, password }),
+  signal: controller.signal,
+});
 
-      if (!res.ok) {
-        toast.error(data.message || "Signup failed", {
-          description: "Please check your details and try again.",
-          duration: 4000,
-        });
-        setLoading(false);
-        return;
-      }
+clearTimeout(timeout);
 
-      toast.success("Account created successfully!", {
-        description: "Welcome aboard. Redirecting to login...",
-        duration: 3000,
-      });
+    const data = await res.json();
 
-      console.log(data);
-      setName("");
-      setEmail("");
-      setPassword("");
-
-      setTimeout(() => navigate("/login"), 1500);
-
-    } catch (error) {
-      console.error("Signup error:", error);
-      toast.error("Server error", {
-        description: "Could not connect to the server. Please try again later.",
+    if (!res.ok) {
+      toast.error(data.message || "Signup failed", {
+        description: "Please check your details and try again.",
         duration: 4000,
       });
-    } finally {
-      setLoading(false);
+      return;
     }
-  };
 
+    toast.success("Account created successfully!", {
+      description: "Welcome aboard. Redirecting to login...",
+      duration: 3000,
+    });
+
+    setName("");
+    setEmail("");
+    setPassword("");
+
+    setTimeout(() => navigate("/login"), 1500);
+
+  } catch (error) {
+    console.error("Signup error:", error);
+
+    toast.error("Server error", {
+      description: "Could not connect to the server.",
+      duration: 4000,
+    });
+
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div
       className="min-h-screen flex items-center justify-center relative overflow-hidden"

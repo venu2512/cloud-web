@@ -90,21 +90,18 @@ router.post("/login", async (req, res) => {
 
     const transporter = require("../config/mail");
 
-await transporter.sendMail({
+transporter.sendMail({
   from: process.env.EMAIL,
   to: email,
   subject: "Your Login OTP",
-  html: `
-    <h2>Your OTP Code</h2>
-    <h1>${otp}</h1>
-    <p>This OTP expires in 5 minutes.</p>
-  `,
+  html: `<h2>Your OTP Code</h2><h1>${otp}</h1>`
+}).then(() => {
+  console.log("OTP sent");
+}).catch(err => {
+  console.log("Email error:", err);
 });
 
-    res.json({
-      message: "OTP sent successfully",
-      email
-    });
+res.json({ message: "OTP sent" });
 
   } catch (error) {
     console.error(error);

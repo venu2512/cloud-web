@@ -38,6 +38,7 @@ const toggleVMStatus = async ({ id, status }: { id: string; status: "running" | 
 const deleteVM = async (id: string) => {
   const res = await fetch(`${API}/vms/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Failed to delete VM");
+  return res.json();
 };
 
 // ─── Confirm Dialog ───────────────────────────────────────────────────────────
