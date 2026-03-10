@@ -34,11 +34,11 @@ interface CreateServerPayload {
 const createServer = async (payload: CreateServerPayload) => {
   const token = localStorage.getItem("token");
 
-  const res = await fetch(`${API}/vms`, {
+  const res = await fetch(`${API}/api/vms`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...(token && { Authorization: `Bearer ${token}` }),
     },
     body: JSON.stringify(payload),
   });

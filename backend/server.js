@@ -1,43 +1,38 @@
 require("dotenv").config();
-
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-import cors from "cors";
 const connectDB = require("./config/db");
 const Stats = require("./models/Stats");
 
-const app = express();
+
 
 
 // ================= SECURITY =================
+const app = express();
+app.set("trust proxy", 1); // add this line
 app.use(helmet());
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100
+  max: 100,
 });
 
 app.use(limiter);
 
-
 // ================= MIDDLEWARE =================
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://cloud-web-two.vercel.app"
-  ]
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
-
 app.use(express.json());
-
 
 // ================= HEALTH CHECK =================
 app.get("/", (req, res) => {
   res.send("Nova Backend Running");
 });
-
 
 // ================= ROUTES =================
 app.use("/api/auth", require("./routes/auth"));
@@ -45,13 +40,10 @@ app.use("/api/dashboard", require("./routes/dashboard"));
 app.use("/api/vms", require("./routes/vms"));
 app.use("/api/monitoring", require("./routes/monitoring"));
 
-
 // ================= LEGACY STATS =================
 app.get("/api/stats", async (req, res) => {
   try {
-
     let stats = await Stats.findOne();
-
     if (!stats) {
       stats = await Stats.create({
         totalServers: 12,
@@ -60,15 +52,12 @@ app.get("/api/stats", async (req, res) => {
         storage: "1.2 TB"
       });
     }
-
     res.json(stats);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server Error" });
   }
 });
-
 
 // ================= 404 =================
 app.use((req, res) => {
@@ -76,8 +65,6 @@ app.use((req, res) => {
     message: `Route not found: ${req.method} ${req.path}`
   });
 });
-
-
 
 // ================= START SERVER =================
 const PORT = process.env.PORT || 5000;

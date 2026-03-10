@@ -1,3 +1,3 @@
-const API = "https://cloud-nova.onrender.com/api";
+const API = "https://cloud-nova.onrender.com";
 
 export default API;
