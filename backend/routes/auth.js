@@ -87,21 +87,28 @@ router.post("/login", async (req, res) => {
       otp,
       expiresAt: new Date(Date.now() + 5 * 60 * 1000)
     });
+// send response first
+res.json({ message: "OTP sent to email" });
+
+// send email in background
+setTimeout(async () => {
+  try {
 
     const transporter = require("../config/mail");
 
-transporter.sendMail({
-  from: process.env.EMAIL,
-  to: email,
-  subject: "Your Login OTP",
-  html: `<h2>Your OTP Code</h2><h1>${otp}</h1>`
-}).then(() => {
-  console.log("OTP sent");
-}).catch(err => {
-  console.log("Email error:", err);
-});
+    await transporter.sendMail({
+      from: process.env.EMAIL,
+      to: email,
+      subject: "Your Login OTP",
+      html: `<h2>Your OTP Code</h2><h1>${otp}</h1>`
+    });
 
-res.json({ message: "OTP sent" });
+    console.log("OTP email sent");
+
+  } catch (err) {
+    console.log("Email error:", err);
+  }
+}, 0);
 
   } catch (error) {
     console.error(error);
