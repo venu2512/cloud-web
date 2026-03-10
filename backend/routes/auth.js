@@ -55,23 +55,16 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({
-        message: "User not found"
-      });
+      return res.status(400).json({ message: "User not found" });
     }
 
-    const isMatch = await bcrypt.compare(
-      password,
-      user.password
-    );
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({
-        message: "Invalid password"
-      });
+      return res.status(400).json({ message: "Invalid password" });
     }
 
-    // ✅ Generate OTP
+    // Generate OTP
     const otp = otpGenerator.generate(6, {
       digits: true,
       upperCase: false,
@@ -79,41 +72,34 @@ router.post("/login", async (req, res) => {
       specialChars: false
     });
 
-    // ✅ Save OTP
-    await Otp.deleteMany({ email }); // remove old OTP
+    await Otp.deleteMany({ email });
 
     await Otp.create({
       email,
       otp,
       expiresAt: new Date(Date.now() + 5 * 60 * 1000)
     });
-// send response first
-res.json({ message: "OTP sent to email" });
 
-// send email in background
-setTimeout(async () => {
-  try {
+    // Send response first
+    res.json({ message: "OTP sent" });
 
+    // Send email in background
     const transporter = require("../config/mail");
 
-    await transporter.sendMail({
+    transporter.sendMail({
       from: process.env.EMAIL,
       to: email,
       subject: "Your Login OTP",
       html: `<h2>Your OTP Code</h2><h1>${otp}</h1>`
-    });
-
-    console.log("OTP email sent");
-
-  } catch (err) {
-    console.log("Email error:", err);
-  }
-}, 0);
+    })
+    .then(() => console.log("OTP email sent"))
+    .catch(err => console.log("Email error:", err));
 
   } catch (error) {
     console.error(error);
     res.status(500).send("Server error");
   }
+
 });
 
 
