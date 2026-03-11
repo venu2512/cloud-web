@@ -9,6 +9,10 @@ const sendMail = ({ to, subject, html }) => {
       htmlContent: html,
     });
 
+
+
+
+
     const options = {
       hostname: "api.brevo.com",
       path: "/v3/smtp/email",
