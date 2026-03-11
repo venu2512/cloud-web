@@ -7,7 +7,6 @@ const connectDB = require("./config/db");
 const Stats = require("./models/Stats");
 
 // ================= DEBUG =================
-console.log("BREVO KEY:", process.env.BREVO_API_KEY ? "✅ Loaded" : "❌ Missing");
 console.log("JWT SECRET:", process.env.JWT_SECRET ? "✅ Loaded" : "❌ Missing");
 
 // ================= SECURITY =================
