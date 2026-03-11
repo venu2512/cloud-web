@@ -1,15 +1,11 @@
 const express = require("express");
 const router = express.Router();
-
 const User = require("../models/User");
 const Otp = require("../models/Otp");
-const transporter = require("../config/mail");
-
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const otpGenerator = require("otp-generator");
 
-
+// ================= REGISTER =================
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -26,21 +22,18 @@ router.post("/register", async (req, res) => {
   }
 });
 
-
+// ================= LOGIN =================
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "User not found" });
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid password" });
 
-    const otp = otpGenerator.generate(6, {
-      digits: true,
-      lowerCaseAlphabets: false,
-      upperCaseAlphabets: false,
-      specialChars: false,
-    });
+    // Generate OTP — no email needed
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     await Otp.deleteMany({ email });
     await Otp.create({
@@ -49,14 +42,13 @@ router.post("/login", async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    res.json({ message: "OTP sent" });
+    console.log(`🔐 OTP for ${email}: ${otp}`);
 
-    transporter.sendMail({
-      from: "CloudNova",
-      to: email,
-      subject: "Your Login OTP",
-      html: `<h2>Your OTP Code</h2><h1>${otp}</h1>`,
-    }).catch((err) => console.error("❌ Email failed:", err.message));
+    // Return OTP directly in response
+    res.json({
+      message: "OTP generated",
+      otp,
+    });
 
   } catch (error) {
     console.error(error);
@@ -64,19 +56,26 @@ router.post("/login", async (req, res) => {
   }
 });
 
-
+// ================= VERIFY OTP =================
 router.post("/verify-otp", async (req, res) => {
   try {
     const { email, otp } = req.body;
+
     const validOtp = await Otp.findOne({
       email,
       otp,
       expiresAt: { $gt: new Date() },
     });
+
     if (!validOtp) return res.status(400).json({ message: "Invalid or expired OTP" });
 
     const user = await User.findOne({ email });
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
     await Otp.deleteMany({ email });
 
     res.json({
@@ -84,11 +83,11 @@ router.post("/verify-otp", async (req, res) => {
       token,
       user: { id: user._id, name: user.name, email: user.email },
     });
+
   } catch (error) {
     console.error(error);
     res.status(500).send("Server error");
   }
-});          // ← this was missing
-
+});
 
 module.exports = router;
