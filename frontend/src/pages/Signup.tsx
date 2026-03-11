@@ -1,64 +1,89 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
-import API from "@/config/api";
+
+const BACKEND = "https://cloud-nova.onrender.com";
+
 const Signup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [slowWarning, setSlowWarning] = useState(false);
   const navigate = useNavigate();
 
+  // Keep backend alive while on signup page
+  useEffect(() => {
+    fetch(`${BACKEND}/`).catch(() => {});
+    const interval = setInterval(() => {
+      fetch(`${BACKEND}/`).catch(() => {});
+    }, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleSignup = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
+    e.preventDefault();
+    setLoading(true);
+    setSlowWarning(false);
 
-  try {
-   const controller = new AbortController();
-const timeout = setTimeout(() => controller.abort(), 15000); // 15 seconds
+    const timer = setTimeout(() => setSlowWarning(true), 5000);
 
-const res = await fetch(`${API}/api/auth/register`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ name, email, password }),
-  signal: controller.signal,
-});
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000); // 60s for cold start
 
-clearTimeout(timeout);
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      toast.error(data.message || "Signup failed", {
-        description: "Please check your details and try again.",
-        duration: 4000,
+      const res = await fetch(`${BACKEND}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+        signal: controller.signal,
       });
-      return;
+
+      clearTimeout(timeout);
+      clearTimeout(timer);
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.message || "Signup failed", {
+          description: "Please check your details and try again.",
+          duration: 4000,
+        });
+        return;
+      }
+
+      toast.success("Account created successfully!", {
+        description: "Welcome aboard. Redirecting to login...",
+        duration: 3000,
+      });
+
+      setName("");
+      setEmail("");
+      setPassword("");
+
+      setTimeout(() => navigate("/login"), 1500);
+
+    } catch (error: any) {
+      clearTimeout(timer);
+      console.error("Signup error:", error);
+
+      if (error.name === "AbortError") {
+        toast.error("Request timed out", {
+          description: "Server took too long to respond. Please try again.",
+          duration: 4000,
+        });
+      } else {
+        toast.error("Server error", {
+          description: "Could not connect to the server. Please try again.",
+          duration: 4000,
+        });
+      }
+    } finally {
+      setLoading(false);
+      setSlowWarning(false);
     }
+  };
 
-    toast.success("Account created successfully!", {
-      description: "Welcome aboard. Redirecting to login...",
-      duration: 3000,
-    });
-
-    setName("");
-    setEmail("");
-    setPassword("");
-
-    setTimeout(() => navigate("/login"), 1500);
-
-  } catch (error) {
-    console.error("Signup error:", error);
-
-    toast.error("Server error", {
-      description: "Could not connect to the server.",
-      duration: 4000,
-    });
-
-  } finally {
-    setLoading(false);
-  }
-};
   return (
     <div
       className="min-h-screen flex items-center justify-center relative overflow-hidden"
@@ -81,11 +106,9 @@ clearTimeout(timeout);
       <div className="absolute pointer-events-none" style={{ width: 400, height: 400, bottom: -80, left: -80, background: "radial-gradient(circle, rgba(0,200,255,0.06) 0%, transparent 70%)", borderRadius: "50%" }} />
 
       {/* Card */}
-      <div
-        className="relative z-10 w-full mx-4"
-        style={{ maxWidth: "420px" }}
-      >
-        {/* Logo mark */}
+      <div className="relative z-10 w-full mx-4" style={{ maxWidth: "420px" }}>
+
+        {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <div
             className="flex items-center justify-center rounded-2xl mb-4"
@@ -195,6 +218,7 @@ clearTimeout(timeout);
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={8}
                 className="w-full rounded-lg px-4 py-3 text-white placeholder-gray-600 outline-none transition-all duration-200"
                 style={{
                   background: "rgba(255,255,255,0.04)",
@@ -236,23 +260,27 @@ clearTimeout(timeout);
               )}
             </button>
 
+            {/* Cold start warning */}
+            {slowWarning && (
+              <p style={{ fontSize: "12px", color: "rgba(0,200,255,0.6)", textAlign: "center", marginTop: 4 }}>
+                ⏳ Server is waking up, please wait up to 60 seconds...
+              </p>
+            )}
+
           </form>
 
-          {/* Divider + Login link */}
+          {/* Login link */}
           <div className="mt-6 text-center">
             <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.3)" }}>
               Already have an account?{" "}
-              <Link
-                to="/login"
-                style={{ color: "#00C8FF", textDecoration: "none", fontWeight: 600 }}
-              >
+              <Link to="/login" style={{ color: "#00C8FF", textDecoration: "none", fontWeight: 600 }}>
                 Sign in
               </Link>
             </p>
           </div>
         </div>
 
-        {/* Footer note */}
+        {/* Footer */}
         <p className="text-center mt-6" style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", letterSpacing: "0.05em" }}>
           By signing up, you agree to our Terms of Service & Privacy Policy.
         </p>

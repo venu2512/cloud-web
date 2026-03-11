@@ -39,28 +39,24 @@ router.post("/login", async (req, res) => {
       digits: true,
       lowerCaseAlphabets: false,
       upperCaseAlphabets: false,
-      specialChars: false
+      specialChars: false,
     });
 
     await Otp.deleteMany({ email });
     await Otp.create({
       email,
       otp,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    // ✅ Respond immediately, send email in background
     res.json({ message: "OTP sent" });
 
-    // Send email in background (non-blocking)
     transporter.sendMail({
-      from: "venu25122005@gmail.com",
+      from: "CloudNova",
       to: email,
       subject: "Your Login OTP",
-      html: `<h2>Your OTP Code</h2><h1>${otp}</h1>`
-    })
-    .then(() => console.log("✅ OTP email sent to", email))
-    .catch(err => console.error("❌ Email failed:", err.message));
+      html: `<h2>Your OTP Code</h2><h1>${otp}</h1>`,
+    }).catch((err) => console.error("❌ Email failed:", err.message));
 
   } catch (error) {
     console.error(error);
@@ -75,24 +71,24 @@ router.post("/verify-otp", async (req, res) => {
     const validOtp = await Otp.findOne({
       email,
       otp,
-      expiresAt: { $gt: new Date() }
+      expiresAt: { $gt: new Date() },
     });
     if (!validOtp) return res.status(400).json({ message: "Invalid or expired OTP" });
 
     const user = await User.findOne({ email });
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || "mySuperSecretKey123", { expiresIn: "1d" });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
     await Otp.deleteMany({ email });
 
     res.json({
       message: "Login successful",
       token,
-      user: { id: user._id, name: user.name, email: user.email }
+      user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (error) {
     console.error(error);
     res.status(500).send("Server error");
   }
-});
+});          // ← this was missing
 
 
 module.exports = router;

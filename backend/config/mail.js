@@ -16,7 +16,8 @@ const sendMail = ({ to, subject, html }) => {
       headers: {
         "Accept": "application/json",
         "Content-Type": "application/json",
-        "api-key": "xsmtpsib-bae60318703930f2c5bcb56861af96640cb2a5e9e9dab0dc5e794c441f870303-LonuFiqpQAGhdi4L",
+        "Content-Length": Buffer.byteLength(data),
+        "api-key": process.env.BREVO_API_KEY,  // ← moved to .env
       },
     };
 
@@ -38,7 +39,6 @@ const sendMail = ({ to, subject, html }) => {
   });
 };
 
-// Match nodemailer interface so auth.js doesn't need changes
 const transporter = {
   sendMail: ({ from, to, subject, html }) => sendMail({ to, subject, html }),
 };

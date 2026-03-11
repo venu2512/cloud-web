@@ -1,82 +1,95 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
+
+const BACKEND = "https://cloud-nova.onrender.com";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState("");
-const [otpSent, setOtpSent] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [slowWarning, setSlowWarning] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+  // Keep backend alive while on login page
+  useEffect(() => {
+    fetch(`${BACKEND}/`).catch(() => {});
+    const interval = setInterval(() => {
+      fetch(`${BACKEND}/`).catch(() => {});
+    }, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  try {
-    const res = await fetch(
-      "https://cloud-nova.onrender.com/api/auth/login",
-      {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setSlowWarning(false);
+
+    const timer = setTimeout(() => setSlowWarning(true), 5000);
+
+    try {
+      const res = await fetch(`${BACKEND}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+      });
+
+      clearTimeout(timer);
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.message || "Invalid credentials");
+        return;
       }
-    );
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      toast.error(data.message || "Invalid credentials");
+      toast.success("OTP sent to your email");
+      setOtpSent(true);
+    } catch (error) {
+      clearTimeout(timer);
+      toast.error("Server error. Please try again.");
+    } finally {
       setLoading(false);
-      return;
+      setSlowWarning(false);
     }
+  };
 
-    toast.success("OTP sent to your email");
-    setOtpSent(true);
+  const verifyOtp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setSlowWarning(false);
 
-  } catch (error) {
-    toast.error("Server error");
-  } finally {
-    setLoading(false);
-  }
-};
+    const timer = setTimeout(() => setSlowWarning(true), 5000);
 
- const verifyOtp = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-
-  try {
-    const res = await fetch(
-      "https://cloud-nova.onrender.com/api/auth/verify-otp",
-      {
+    try {
+      const res = await fetch(`${BACKEND}/api/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp }),
+      });
+
+      clearTimeout(timer);
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error("Invalid OTP");
+        return;
       }
-    );
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      toast.error("Invalid OTP");
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      toast.success("Login Successful");
+      navigate("/dashboard");
+    } catch (error) {
+      clearTimeout(timer);
+      toast.error("OTP verification failed");
+    } finally {
       setLoading(false);
-      return;
+      setSlowWarning(false);
     }
+  };
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-
-    toast.success("Login Successful");
-
-    navigate("/dashboard");
-
-  } catch (error) {
-    toast.error("OTP verification failed");
-  } finally {
-    setLoading(false);
-  }
-};
   return (
     <div
       className="min-h-screen flex items-center justify-center relative overflow-hidden"
@@ -164,91 +177,90 @@ const [otpSent, setOtpSent] = useState(false);
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={otpSent}
                 className="w-full rounded-lg px-4 py-3 text-white placeholder-gray-600 outline-none transition-all duration-200"
                 style={{
                   background: "rgba(255,255,255,0.04)",
                   border: "1px solid rgba(0,200,255,0.15)",
                   fontSize: "14px",
                   fontFamily: "inherit",
+                  opacity: otpSent ? 0.5 : 1,
                 }}
                 onFocus={(e) => (e.target.style.borderColor = "rgba(0,200,255,0.5)")}
                 onBlur={(e) => (e.target.style.borderColor = "rgba(0,200,255,0.15)")}
               />
             </div>
-            
 
-
-
-
-{otpSent && (
-  <div className="flex flex-col gap-1.5">
-    <label
-      style={{
-        fontFamily: "'Courier New', monospace",
-        fontSize: "11px",
-        color: "rgba(0,200,255,0.6)",
-        letterSpacing: "0.1em"
-      }}
-    >
-      ENTER OTP
-    </label>
-
-    <input
-      type="text"
-      placeholder="Enter OTP"
-      value={otp}
-      onChange={(e) => setOtp(e.target.value)}
-      required
-      className="w-full rounded-lg px-4 py-3 text-white placeholder-gray-600 outline-none transition-all duration-200"
-      style={{
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(0,200,255,0.15)",
-        fontSize: "14px"
-      }}
-    />
-  </div>
-)}
-
-            {/* Password */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <label style={{ fontFamily: "'Courier New', monospace", fontSize: "11px", color: "rgba(0,200,255,0.6)", letterSpacing: "0.1em" }}>
-                  PASSWORD
-                </label>
-                <a href="#" style={{ fontSize: "11px", color: "rgba(0,200,255,0.45)", textDecoration: "none" }}
-                  onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#00C8FF")}
-                  onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "rgba(0,200,255,0.45)")}
-                >
-                  Forgot password?
-                </a>
+            {/* Password — hidden after OTP sent */}
+            {!otpSent && (
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label style={{ fontFamily: "'Courier New', monospace", fontSize: "11px", color: "rgba(0,200,255,0.6)", letterSpacing: "0.1em" }}>
+                    PASSWORD
+                  </label>
+                  <a href="#" style={{ fontSize: "11px", color: "rgba(0,200,255,0.45)", textDecoration: "none" }}
+                    onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#00C8FF")}
+                    onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "rgba(0,200,255,0.45)")}
+                  >
+                    Forgot password?
+                  </a>
+                </div>
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full rounded-lg px-4 py-3 text-white placeholder-gray-600 outline-none transition-all duration-200"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(0,200,255,0.15)",
+                    fontSize: "14px",
+                    fontFamily: "inherit",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "rgba(0,200,255,0.5)")}
+                  onBlur={(e) => (e.target.style.borderColor = "rgba(0,200,255,0.15)")}
+                />
               </div>
-              <input
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full rounded-lg px-4 py-3 text-white placeholder-gray-600 outline-none transition-all duration-200"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(0,200,255,0.15)",
-                  fontSize: "14px",
-                  fontFamily: "inherit",
-                }}
-                onFocus={(e) => (e.target.style.borderColor = "rgba(0,200,255,0.5)")}
-                onBlur={(e) => (e.target.style.borderColor = "rgba(0,200,255,0.15)")}
-              />
-            </div>
+            )}
 
-            {/* Submit */}
+            {/* OTP input */}
+            {otpSent && (
+              <div className="flex flex-col gap-1.5">
+                <label style={{ fontFamily: "'Courier New', monospace", fontSize: "11px", color: "rgba(0,200,255,0.6)", letterSpacing: "0.1em" }}>
+                  ENTER OTP
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter 6-digit OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                  autoFocus
+                  maxLength={6}
+                  className="w-full rounded-lg px-4 py-3 text-white placeholder-gray-600 outline-none transition-all duration-200"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(0,200,255,0.15)",
+                    fontSize: "14px",
+                    letterSpacing: "0.3em",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "rgba(0,200,255,0.5)")}
+                  onBlur={(e) => (e.target.style.borderColor = "rgba(0,200,255,0.15)")}
+                />
+                <p style={{ fontSize: "11px", color: "rgba(0,200,255,0.4)", marginTop: 2 }}>
+                  OTP sent to {email}
+                </p>
+              </div>
+            )}
+
+            {/* Submit button */}
             <button
               type="submit"
               disabled={loading}
               className="w-full rounded-lg py-3 font-semibold text-white transition-all duration-200 mt-2"
               style={{
-                background: loading
-                  ? "rgba(0,100,200,0.4)"
-                  : "linear-gradient(90deg, #0050FF, #00C8FF)",
+                background: loading ? "rgba(0,100,200,0.4)" : "linear-gradient(90deg, #0050FF, #00C8FF)",
                 boxShadow: loading ? "none" : "0 0 24px rgba(0,200,255,0.25)",
                 fontSize: "14px",
                 letterSpacing: "0.05em",
@@ -262,23 +274,27 @@ const [otpSent, setOtpSent] = useState(false);
                     <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="3" />
                     <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round" />
                   </svg>
-                  Signing in...
+                  {otpSent ? "Verifying..." : "Signing in..."}
                 </span>
               ) : (
                 <span>{otpSent ? "Verify OTP →" : "Sign In →"}</span>
               )}
             </button>
 
+            {/* Cold start warning */}
+            {slowWarning && (
+              <p style={{ fontSize: "12px", color: "rgba(0,200,255,0.6)", textAlign: "center", marginTop: 4 }}>
+                ⏳ Server is waking up, please wait up to 60 seconds...
+              </p>
+            )}
+
           </form>
 
-          {/* Divider + Signup link */}
+          {/* Signup link */}
           <div className="mt-6 text-center">
             <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.3)" }}>
               Don't have an account?{" "}
-              <Link
-                to="/signup"
-                style={{ color: "#00C8FF", textDecoration: "none", fontWeight: 600 }}
-              >
+              <Link to="/signup" style={{ color: "#00C8FF", textDecoration: "none", fontWeight: 600 }}>
                 Create one
               </Link>
             </p>
