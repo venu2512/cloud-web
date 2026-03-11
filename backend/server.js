@@ -6,19 +6,19 @@ const rateLimit = require("express-rate-limit");
 const connectDB = require("./config/db");
 const Stats = require("./models/Stats");
 
-
-
+// ================= DEBUG =================
+console.log("BREVO KEY:", process.env.BREVO_API_KEY ? "✅ Loaded" : "❌ Missing");
+console.log("JWT SECRET:", process.env.JWT_SECRET ? "✅ Loaded" : "❌ Missing");
 
 // ================= SECURITY =================
 const app = express();
-app.set("trust proxy", 1); // add this line
+app.set("trust proxy", 1);
 app.use(helmet());
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
 });
-
 app.use(limiter);
 
 // ================= MIDDLEWARE =================
@@ -69,12 +69,11 @@ app.use((req, res) => {
 // ================= START SERVER =================
 const PORT = process.env.PORT || 5000;
 
-// ✅ Bind port FIRST so Render detects it, then connect DB
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
-
-connectDB().catch((err) => {
-  console.error("MongoDB failed to connect:", err.message);
-  server.close(() => process.exit(1));
+connectDB().then(() => {
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`✅ Server running on port ${PORT}`);
+  });
+}).catch((err) => {
+  console.error("❌ MongoDB failed to connect:", err.message);
+  process.exit(1);
 });
