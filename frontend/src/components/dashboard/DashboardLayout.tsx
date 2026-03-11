@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronLeft,
   Bell,
+
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ const menuItems = [
   { icon: Activity,        label: "Monitoring",       path: "/dashboard/monitoring" },
   { icon: Settings,        label: "Settings",         path: "/dashboard/settings" },
 ];
+
 
 const LogoMark = ({ size = 28 }: { size?: number }) => (
   <div
@@ -50,6 +52,7 @@ const LogoMark = ({ size = 28 }: { size?: number }) => (
     </svg>
   </div>
 );
+
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen]         = useState(false);
@@ -86,6 +89,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     const timer = setTimeout(() => setIsTransitioning(false), 0);
     return () => clearTimeout(timer);
   }, [location.pathname]);
+
 
   const allLabels: Record<string, string> = {
     "/dashboard/notifications": "Notifications",
@@ -211,6 +215,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           className="h-16 flex items-center justify-between px-4 lg:px-6 flex-shrink-0"
           style={{ background: "rgba(2,11,24,0.95)", borderBottom: "1px solid rgba(0,200,255,0.06)", backdropFilter: "blur(12px)" }}
         >
+
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -228,6 +233,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               </p>
             </div>
           </div>
+
 
           <div className="flex items-center gap-3">
 
@@ -249,6 +255,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               }}
             >
               <Bell className="h-4 w-4" />
+
               <span className="absolute top-1.5 right-1.5 rounded-full" style={{ width: 6, height: 6, background: "#00C8FF", boxShadow: "0 0 6px #00C8FF" }} />
             </button>
 
