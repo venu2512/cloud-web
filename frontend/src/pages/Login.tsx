@@ -13,7 +13,7 @@ const Login = () => {
   const [slowWarning, setSlowWarning] = useState(false);
   const navigate = useNavigate();
 
-  // Keep backend alive while on login page
+  // Keep backend alive
   useEffect(() => {
     fetch(`${BACKEND}/`).catch(() => {});
     const interval = setInterval(() => {
@@ -44,8 +44,9 @@ const Login = () => {
         return;
       }
 
-      toast.success("OTP sent to your email");
-      setOtpSent(true);
+      toast.success("OTP sent to your email!");
+setOtpSent(true);
+
     } catch (error) {
       clearTimeout(timer);
       toast.error("Server error. Please try again.");
@@ -81,6 +82,7 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(data.user));
       toast.success("Login Successful");
       navigate("/dashboard");
+
     } catch (error) {
       clearTimeout(timer);
       toast.error("OTP verification failed");
@@ -191,7 +193,7 @@ const Login = () => {
               />
             </div>
 
-            {/* Password — hidden after OTP sent */}
+            {/* Password - hidden after OTP sent */}
             {!otpSent && (
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
@@ -242,14 +244,14 @@ const Login = () => {
                   style={{
                     background: "rgba(255,255,255,0.04)",
                     border: "1px solid rgba(0,200,255,0.15)",
-                    fontSize: "14px",
-                    letterSpacing: "0.3em",
+                    fontSize: "18px",
+                    letterSpacing: "0.5em",
                   }}
                   onFocus={(e) => (e.target.style.borderColor = "rgba(0,200,255,0.5)")}
                   onBlur={(e) => (e.target.style.borderColor = "rgba(0,200,255,0.15)")}
                 />
                 <p style={{ fontSize: "11px", color: "rgba(0,200,255,0.4)", marginTop: 2 }}>
-                  OTP sent to {email}
+                  Check the toast notification above for your OTP
                 </p>
               </div>
             )}

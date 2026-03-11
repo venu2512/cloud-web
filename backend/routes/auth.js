@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const Otp = require("../models/Otp");
+const transporter = require("../config/mail");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -32,7 +33,7 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid password" });
 
-    // Generate OTP — no email needed
+    // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     await Otp.deleteMany({ email });
@@ -42,12 +43,27 @@ router.post("/login", async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    console.log(`🔐 OTP for ${email}: ${otp}`);
+    // Respond immediately — don't wait for email
+    res.json({ message: "OTP sent to your email" });
 
-    // Return OTP directly in response
-    res.json({
-      message: "OTP generated",
-      otp,
+    // Send email in background
+    transporter.sendMail({
+      from: `"NimbuCloud" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: "Your Login OTP",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto;">
+          <h2 style="color: #0050FF;">NimbuCloud Login OTP</h2>
+          <p>Your one-time password is:</p>
+          <h1 style="font-size: 48px; letter-spacing: 8px; color: #00C8FF;">${otp}</h1>
+          <p style="color: #666;">This OTP expires in 5 minutes.</p>
+          <p style="color: #666;">If you didn't request this, ignore this email.</p>
+        </div>
+      `,
+    }).then(() => {
+      console.log(`✅ OTP email sent to ${email}`);
+    }).catch((err) => {
+      console.error(`❌ Email failed: ${err.message}`);
     });
 
   } catch (error) {
