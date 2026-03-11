@@ -21,7 +21,7 @@ const sendMail = ({ to, subject, html }) => {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "Content-Length": Buffer.byteLength(data),
-        "api-key": process.env.BREVO_API_KEY,  // ← moved to .env
+        "api-key": "xsmtpsib-bae60318703930f2c5bcb56861af96640cb2a5e9e9dab0dc5e794c441f870303-ijaH50BueK2RUmuP",  // ← moved to .env
       },
     };
 
