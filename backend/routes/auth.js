@@ -49,19 +49,18 @@ router.post("/login", async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000)
     });
 
-    try {
-      await transporter.sendMail({
-        from: "venu25122005@gmail.com",
-        to: email,
-        subject: "Your Login OTP",
-        html: `<h2>Your OTP Code</h2><h1>${otp}</h1>`
-      });
-      console.log("✅ OTP email sent to", email);
-    } catch (mailErr) {
-      console.error("❌ Email failed:", mailErr.message);
-    }
-
+    // ✅ Respond immediately, send email in background
     res.json({ message: "OTP sent" });
+
+    // Send email in background (non-blocking)
+    transporter.sendMail({
+      from: "venu25122005@gmail.com",
+      to: email,
+      subject: "Your Login OTP",
+      html: `<h2>Your OTP Code</h2><h1>${otp}</h1>`
+    })
+    .then(() => console.log("✅ OTP email sent to", email))
+    .catch(err => console.error("❌ Email failed:", err.message));
 
   } catch (error) {
     console.error(error);

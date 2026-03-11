@@ -36,7 +36,7 @@ const MOCK_DATA = generateMockData();
 
 const fetchMonitoringData = async (): Promise<MonitoringData> => {
   try {
-    const res = await fetch("http://localhost:5000/api/monitoring/metrics");
+    const res = await fetch("https://cloud-nova.onrender.com/api/monitoring/metrics");
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   } catch {

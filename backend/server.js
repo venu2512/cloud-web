@@ -69,8 +69,12 @@ app.use((req, res) => {
 // ================= START SERVER =================
 const PORT = process.env.PORT || 5000;
 
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`✅ Server running on port ${PORT}`);
-  });
+// ✅ Bind port FIRST so Render detects it, then connect DB
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
+
+connectDB().catch((err) => {
+  console.error("MongoDB failed to connect:", err.message);
+  server.close(() => process.exit(1));
 });
