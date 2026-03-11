@@ -45,7 +45,7 @@ const Login = () => {
       }
 
       toast.success("OTP sent to your email!");
-setOtpSent(true);
+      setOtpSent(true);
 
     } catch (error) {
       clearTimeout(timer);
@@ -74,13 +74,13 @@ setOtpSent(true);
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error("Invalid OTP");
+        toast.error("Invalid or expired OTP");
         return;
       }
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      toast.success("Login Successful");
+      toast.success("Login Successful!");
       navigate("/dashboard");
 
     } catch (error) {
@@ -226,7 +226,7 @@ setOtpSent(true);
               </div>
             )}
 
-            {/* OTP input */}
+            {/* OTP input - shown after login */}
             {otpSent && (
               <div className="flex flex-col gap-1.5">
                 <label style={{ fontFamily: "'Courier New', monospace", fontSize: "11px", color: "rgba(0,200,255,0.6)", letterSpacing: "0.1em" }}>
@@ -246,12 +246,13 @@ setOtpSent(true);
                     border: "1px solid rgba(0,200,255,0.15)",
                     fontSize: "18px",
                     letterSpacing: "0.5em",
+                    textAlign: "center",
                   }}
                   onFocus={(e) => (e.target.style.borderColor = "rgba(0,200,255,0.5)")}
                   onBlur={(e) => (e.target.style.borderColor = "rgba(0,200,255,0.15)")}
                 />
-                <p style={{ fontSize: "11px", color: "rgba(0,200,255,0.4)", marginTop: 2 }}>
-                  Check the toast notification above for your OTP
+                <p style={{ fontSize: "11px", color: "rgba(0,200,255,0.4)", marginTop: 2, textAlign: "center" }}>
+                  Check your email — OTP expires in 5 minutes
                 </p>
               </div>
             )}

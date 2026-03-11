@@ -23,20 +23,20 @@ interface VM {
 const API = "https://cloud-nova.onrender.com";
 
 const fetchVMs = async (): Promise<VM[]> => {
-  const res = await fetch(`${API}/vms`);
+const res = await fetch(`${API}/api/vms`);
   if (!res.ok) throw new Error(`Failed to fetch VMs (${res.status})`);
   return res.json();
 };
 
 const toggleVMStatus = async ({ id, status }: { id: string; status: "running" | "stopped" }) => {
   const action = status === "running" ? "stop" : "start";
-  const res = await fetch(`${API}/vms/${id}/${action}`, { method: "PUT" });
+  const res = await fetch(`${API}/api/vms/${id}/${action}`, { method: "PUT" });
   if (!res.ok) throw new Error(`Failed to ${action} VM`);
   return res.json();
 };
 
 const deleteVM = async (id: string) => {
-  const res = await fetch(`${API}/vms/${id}`, { method: "DELETE" });
+  const res = await fetch(`${API}/api/vms/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Failed to delete VM");
   return res.json();
 };

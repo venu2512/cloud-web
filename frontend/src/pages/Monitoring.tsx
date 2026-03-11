@@ -36,7 +36,10 @@ const MOCK_DATA = generateMockData();
 
 const fetchMonitoringData = async (): Promise<MonitoringData> => {
   try {
-    const res = await fetch("https://cloud-nova.onrender.com/api/monitoring/metrics");
+   const token = localStorage.getItem("token");
+const res = await fetch("https://cloud-nova.onrender.com/api/monitoring/metrics", {
+  headers: { "Authorization": `Bearer ${token}` },
+});
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   } catch {

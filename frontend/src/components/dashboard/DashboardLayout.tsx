@@ -14,7 +14,6 @@ import {
   LogOut,
   ChevronLeft,
   Bell,
-  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +26,6 @@ const menuItems = [
   { icon: Settings,        label: "Settings",         path: "/dashboard/settings" },
 ];
 
-// ─── CloudNova logo mark ──────────────────────────────────────────────────────
 const LogoMark = ({ size = 28 }: { size?: number }) => (
   <div
     className="flex-shrink-0 flex items-center justify-center rounded-lg"
@@ -53,13 +51,35 @@ const LogoMark = ({ size = 28 }: { size?: number }) => (
   </div>
 );
 
-// ─── DashboardLayout ──────────────────────────────────────────────────────────
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen]         = useState(false);
   const [collapsed, setCollapsed]             = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const location  = useLocation();
-  const navigate  = useNavigate();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // ✅ Auth guard — redirect to login if no token
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) navigate("/login");
+  }, [navigate]);
+
+  // ✅ Load real user from localStorage
+  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const userName = storedUser?.name || "User";
+  const userInitials = userName
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  // ✅ Sign out — clear token and redirect
+  const handleSignOut = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   useEffect(() => {
     setIsTransitioning(true);
@@ -67,7 +87,6 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
-  // Resolve topbar title — include profile/notifications too
   const allLabels: Record<string, string> = {
     "/dashboard/notifications": "Notifications",
     "/dashboard/profile":       "Profile",
@@ -90,7 +109,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
+      {/* ── Sidebar ── */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 lg:relative",
@@ -169,22 +188,22 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        {/* Sign out */}
+        {/* ✅ Sign out button — now clears token */}
         <div className="p-2 flex-shrink-0" style={{ borderTop: "1px solid rgba(0,200,255,0.06)" }}>
-          <Link
-            to="/"
-            className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150", collapsed && "justify-center px-2")}
-            style={{ fontFamily: "'Courier New', monospace", fontSize: "12px", letterSpacing: "0.04em", color: "rgba(255,255,255,0.3)" }}
+          <button
+            onClick={handleSignOut}
+            className={cn("w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150", collapsed && "justify-center px-2")}
+            style={{ fontFamily: "'Courier New', monospace", fontSize: "12px", letterSpacing: "0.04em", color: "rgba(255,255,255,0.3)", background: "transparent", border: "none", cursor: "pointer" }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,80,80,0.06)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,100,100,0.8)"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.3)"; }}
           >
             <LogOut className="h-4 w-4 shrink-0" />
             {!collapsed && <span>Sign out</span>}
-          </Link>
+          </button>
         </div>
       </aside>
 
-      {/* ── Main content ─────────────────────────────────────────────────────── */}
+      {/* ── Main content ── */}
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* Topbar */}
@@ -192,7 +211,6 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           className="h-16 flex items-center justify-between px-4 lg:px-6 flex-shrink-0"
           style={{ background: "rgba(2,11,24,0.95)", borderBottom: "1px solid rgba(0,200,255,0.06)", backdropFilter: "blur(12px)" }}
         >
-          {/* Left: mobile menu + page title */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -211,10 +229,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          {/* Right: bell + avatar — NOW CLICKABLE */}
           <div className="flex items-center gap-3">
 
-            {/* ✅ Bell → /dashboard/notifications */}
+            {/* Bell */}
             <button
               onClick={() => navigate("/dashboard/notifications")}
               className="relative flex items-center justify-center rounded-lg transition-all duration-200"
@@ -232,11 +249,10 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               }}
             >
               <Bell className="h-4 w-4" />
-              {/* Unread dot */}
               <span className="absolute top-1.5 right-1.5 rounded-full" style={{ width: 6, height: 6, background: "#00C8FF", boxShadow: "0 0 6px #00C8FF" }} />
             </button>
 
-            {/* ✅ Avatar → /dashboard/profile */}
+            {/* ✅ Avatar — shows real user name from localStorage */}
             <div
               onClick={() => navigate("/dashboard/profile")}
               className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 cursor-pointer transition-all duration-200"
@@ -248,10 +264,10 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 className="flex items-center justify-center rounded-full"
                 style={{ width: 28, height: 28, background: "linear-gradient(135deg, #0050FF, #00C8FF)", fontFamily: "'Courier New', monospace", fontSize: "10px", fontWeight: "bold", color: "#fff", letterSpacing: "0.05em" }}
               >
-                JD
+                {userInitials}
               </div>
               <div className="hidden sm:block">
-                <p style={{ fontFamily: "'Courier New', monospace", fontSize: "11px", color: "rgba(255,255,255,0.7)", letterSpacing: "0.05em" }}>John Doe</p>
+                <p style={{ fontFamily: "'Courier New', monospace", fontSize: "11px", color: "rgba(255,255,255,0.7)", letterSpacing: "0.05em" }}>{userName}</p>
                 <p style={{ fontFamily: "'Courier New', monospace", fontSize: "10px", color: "rgba(0,200,255,0.4)", letterSpacing: "0.04em" }}>Pro Plan</p>
               </div>
             </div>

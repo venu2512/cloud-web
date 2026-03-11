@@ -23,7 +23,6 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// ================= LOGIN =================
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -43,21 +42,21 @@ router.post("/login", async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    // Respond immediately — don't wait for email
+    // ✅ Respond immediately — don't wait for email
     res.json({ message: "OTP sent to your email" });
 
-    // Send email in background
+    // ✅ Send email in background
     transporter.sendMail({
       from: `"NimbuCloud" <${process.env.GMAIL_USER}>`,
       to: email,
-      subject: "Your Login OTP",
+      subject: "Your Login OTP - NimbuCloud",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto;">
-          <h2 style="color: #0050FF;">NimbuCloud Login OTP</h2>
-          <p>Your one-time password is:</p>
-          <h1 style="font-size: 48px; letter-spacing: 8px; color: #00C8FF;">${otp}</h1>
-          <p style="color: #666;">This OTP expires in 5 minutes.</p>
-          <p style="color: #666;">If you didn't request this, ignore this email.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #0050FF;">NimbuCloud</h2>
+          <p>Your one-time login password is:</p>
+          <h1 style="font-size: 48px; letter-spacing: 8px; color: #00C8FF; text-align: center;">${otp}</h1>
+          <p style="color: #666;">This OTP expires in <strong>5 minutes</strong>.</p>
+          <p style="color: #999; font-size: 12px;">If you didn't request this, please ignore this email.</p>
         </div>
       `,
     }).then(() => {
@@ -72,7 +71,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ================= VERIFY OTP =================
 router.post("/verify-otp", async (req, res) => {
   try {
     const { email, otp } = req.body;

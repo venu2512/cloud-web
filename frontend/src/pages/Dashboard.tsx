@@ -43,9 +43,13 @@ interface DashboardMetrics {
 const API = "https://cloud-nova.onrender.com";
 
 const fetchDashboardMetrics = async (): Promise<DashboardMetrics> => {
-  const res = await fetch(`${API}/api/dashboard/metrics`, {
-    headers: { "Content-Type": "application/json" },
-  });
+  const token = localStorage.getItem("token");
+const res = await fetch("https://cloud-nova.onrender.com/api/dashboard/metrics", {
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`,
+  },
+});
   if (!res.ok) throw new Error(`Failed to fetch metrics (${res.status})`);
   return res.json();
 };
