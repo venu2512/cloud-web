@@ -1,4 +1,4 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
 const hasSmtpConfig =
   process.env.SMTP_HOST &&
