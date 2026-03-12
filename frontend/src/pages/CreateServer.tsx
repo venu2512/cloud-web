@@ -20,6 +20,8 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/dashboard/DashboardSkeleton";
 
 // ─── Types ─────────────────────────────────────────────────────
+
+// ─── Types ─────────────────────────────────────────────────────
 interface CreateServerPayload {
   name: string;
   cpu: string;
@@ -29,10 +31,7 @@ interface CreateServerPayload {
   os: string;
 }
 
-interface CreateServerResponse {
-  name: string;
-  id: string;
-}
+// ─── API Call ──────────────────────────────────────────────────
 
 // ─── API Call ──────────────────────────────────────────────────
 const createServer = async (payload: CreateServerPayload) => {
@@ -96,14 +95,19 @@ const CreateServer = () => {
     CreateServerPayload
   >({
     mutationFn: createServer,
+
     onSuccess: (data) => {
       toast.success("Server deploying!", {
         description: `${data.name ?? name} is being provisioned.`,
       });
+
       navigate("/dashboard/vms");
     },
+
     onError: (err: Error) => {
-      toast.error("Failed to create server", { description: err.message });
+      toast.error("Failed to create server", {
+        description: err.message,
+      });
     },
   });
 
@@ -112,12 +116,20 @@ const CreateServer = () => {
       toast.error("Server name is required");
       return;
     }
+
     if (!/^[a-z0-9-]+$/.test(name.trim())) {
       toast.error("Invalid server name");
       return;
     }
 
-    deploy({ name: name.trim(), cpu, ram, storage, region, os });
+    deploy({
+      name: name.trim(),
+      cpu,
+      ram,
+      storage,
+      region,
+      os,
+    });
   };
 
   const estimatedPrice = estimatePrice(cpu, ram, storage);
@@ -125,13 +137,18 @@ const CreateServer = () => {
   if (loading) return <FormSkeleton />;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-xl space-y-6">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="max-w-xl space-y-6"
+    >
       {/* Back button */}
       <button
         onClick={() => navigate("/dashboard/vms")}
         className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to Virtual Machines
+        <ArrowLeft className="h-4 w-4" />
+        Back to Virtual Machines
       </button>
 
       {/* Title */}
@@ -144,10 +161,16 @@ const CreateServer = () => {
 
       {/* Form */}
       <div className="rounded-xl border p-6 space-y-5">
+
         {/* Server Name */}
         <div className="space-y-2">
           <Label>Server name</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} disabled={isPending} />
+          <Input
+            placeholder="my-server-01"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={isPending}
+          />
         </div>
 
         {/* Operating System */}
@@ -230,7 +253,7 @@ const CreateServer = () => {
           </Select>
         </div>
 
-        {/* Estimated Price */}
+        {/* Price */}
         <div className="flex justify-between text-sm">
           <span>Estimated Cost</span>
           <span className="font-bold">${estimatedPrice}/month</span>
@@ -238,7 +261,17 @@ const CreateServer = () => {
 
         {/* Deploy Button */}
         <Button onClick={handleDeploy} className="w-full" disabled={isPending}>
-          {isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : "Deploy Server"}
+          {isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Deploying...
+            </>
+          ) : (
+            <>
+              <Rocket className="h-4 w-4 mr-2" />
+              Deploy Server
+            </>
+          )}
         </Button>
       </div>
     </motion.div>
