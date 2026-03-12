@@ -21,7 +21,7 @@ import { ArrowLeft, Loader2, Rocket } from "lucide-react";
 import { FormSkeleton } from "@/components/dashboard/DashboardSkeleton";
 
 
-// ─── Types ─────────────────────────────────────────────────────
+// ─── Types ─────────────────────────────────────
 
 interface CreateServerPayload {
   name: string;
@@ -39,7 +39,7 @@ interface CreateServerResponse {
 }
 
 
-// ─── API Call ──────────────────────────────────────────────────
+// ─── API Call ───────────────────────────────────
 
 const createServer = async (payload: CreateServerPayload) => {
   const token = localStorage.getItem("token");
@@ -61,7 +61,7 @@ const createServer = async (payload: CreateServerPayload) => {
 };
 
 
-// ─── Pricing helper ────────────────────────────────────────────
+// ─── Pricing ───────────────────────────────────
 
 const PRICES: Record<string, number> = {
   cpu_1: 5,
@@ -84,7 +84,7 @@ const estimatePrice = (cpu: string, ram: string, storage: string) =>
   (PRICES[`storage_${storage}`] ?? 0);
 
 
-// ─── Component ─────────────────────────────────────────────────
+// ─── Component ──────────────────────────────────
 
 const CreateServer = () => {
   const navigate = useNavigate();
@@ -98,10 +98,9 @@ const CreateServer = () => {
   const [os, setOs] = useState("ubuntu-22");
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 400);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setLoading(false), 400);
+    return () => clearTimeout(timer);
   }, []);
-
 
   const { mutate: deploy, isPending } = useMutation<
     CreateServerResponse,
@@ -146,7 +145,6 @@ const CreateServer = () => {
       os,
     });
   };
-
 
   const estimatedPrice = estimatePrice(cpu, ram, storage);
 
@@ -194,7 +192,7 @@ const CreateServer = () => {
         </div>
 
 
-        {/* Operating System */}
+        {/* OS */}
         <div className="space-y-2">
           <Label>Operating System</Label>
           <Select value={os} onValueChange={setOs}>
@@ -208,7 +206,6 @@ const CreateServer = () => {
               <SelectItem value="debian-12">Debian 12</SelectItem>
               <SelectItem value="centos-9">CentOS Stream 9</SelectItem>
             </SelectContent>
-
           </Select>
         </div>
 
@@ -227,7 +224,6 @@ const CreateServer = () => {
               <SelectItem value="4">4 vCPU</SelectItem>
               <SelectItem value="8">8 vCPU</SelectItem>
             </SelectContent>
-
           </Select>
         </div>
 
@@ -246,7 +242,6 @@ const CreateServer = () => {
               <SelectItem value="8">8 GB</SelectItem>
               <SelectItem value="16">16 GB</SelectItem>
             </SelectContent>
-
           </Select>
         </div>
 
@@ -265,7 +260,6 @@ const CreateServer = () => {
               <SelectItem value="100">100 GB SSD</SelectItem>
               <SelectItem value="200">200 GB SSD</SelectItem>
             </SelectContent>
-
           </Select>
         </div>
 
@@ -284,7 +278,6 @@ const CreateServer = () => {
               <SelectItem value="eu-west">EU West</SelectItem>
               <SelectItem value="ap-south">Asia Pacific</SelectItem>
             </SelectContent>
-
           </Select>
         </div>
 
