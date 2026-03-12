@@ -32,14 +32,36 @@ app.use("/api", limiter);
 
 // ================= MIDDLEWARE =================
 
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+ const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+const isOriginAllowed = (origin) => {
+  if (!origin || allowedOrigins.length === 0) {
+    return true;
+  }
+
+  return allowedOrigins.some((pattern) => {
+    if (pattern === origin) {
+      return true;
+    }
+
+    if (!pattern.includes("*")) {
+      return false;
+    }
+
+    const regexPattern = `^${pattern
+      .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+      .replace(/\*/g, ".*")}$`;
+
+    return new RegExp(regexPattern).test(origin);
+  });
+};
+
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+    if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
 
