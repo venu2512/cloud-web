@@ -1,10 +1,19 @@
-// Ping backend every 10 minutes to keep it awake
-const BACKEND_URL = "https://cloud-nova.onrender.com";
+// src/config/api.ts
 
+// Backend URL
+const API =
+  import.meta.env.VITE_API_URL ||
+  "https://cloud-nova.onrender.com";
+
+// Ping backend every 10 minutes to keep it awake
 export const keepAlive = () => {
   setInterval(async () => {
     try {
-      await fetch(`${BACKEND_URL}/`);
-    } catch (e) {}
-  }, 10 * 60 * 1000); // every 10 minutes
+      await fetch(`${API}/`);
+    } catch (e) {
+      console.log("KeepAlive failed");
+    }
+  }, 10 * 60 * 1000); // 10 minutes
 };
+
+export default API;
