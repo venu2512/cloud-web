@@ -1,24 +1,25 @@
+// src/pages/dashboard/CreateServer.tsx
 import API from "@/config/api";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectContent,
+  SelectItem,
 } from "@/components/ui/select";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Rocket, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/dashboard/DashboardSkeleton";
 
 // ─── Types ─────────────────────────────────────────────────────
-
 interface CreateServerPayload {
   name: string;
   cpu: string;
@@ -28,42 +29,37 @@ interface CreateServerPayload {
   os: string;
 }
 
-// ─── API Call ──────────────────────────────────────────────────
+interface CreateServerResponse {
+  name: string;
+  id: string;
+}
 
+// ─── API Call ──────────────────────────────────────────────────
 const createServer = async (payload: CreateServerPayload) => {
   const token = localStorage.getItem("token");
-
-  const res = await fetch(`${API}/api/vms`, {
+  const res = await fetch(`${API}/servers/create`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
   });
-
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.message || `Failed to create server (${res.status})`);
-  }
-
-  return res.json();
+  if (!res.ok) throw new Error("Failed to create server");
+  return res.json() as Promise<CreateServerResponse>;
 };
 
 // ─── Pricing helper ────────────────────────────────────────────
-
 const PRICES: Record<string, number> = {
   cpu_1: 5,
   cpu_2: 10,
   cpu_4: 20,
   cpu_8: 40,
-
   ram_2: 4,
   ram_4: 8,
   ram_8: 16,
   ram_16: 32,
   ram_32: 64,
-
   storage_25: 2.5,
   storage_50: 5,
   storage_100: 10,
@@ -76,7 +72,6 @@ const estimatePrice = (cpu: string, ram: string, storage: string) =>
   (PRICES[`storage_${storage}`] ?? 0);
 
 // ─── Component ─────────────────────────────────────────────────
-
 const CreateServer = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -95,23 +90,20 @@ const CreateServer = () => {
     return () => clearTimeout(t);
   }, []);
 
-  const estimatedPrice = estimatePrice(cpu, ram, storage);
-
-  const { mutate: deploy, isPending } = useMutation({
+  const { mutate: deploy, isPending } = useMutation<
+    CreateServerResponse,
+    Error,
+    CreateServerPayload
+  >({
     mutationFn: createServer,
-
     onSuccess: (data) => {
       toast.success("Server deploying!", {
         description: `${data.name ?? name} is being provisioned.`,
       });
-
       navigate("/dashboard/vms");
     },
-
     onError: (err: Error) => {
-      toast.error("Failed to create server", {
-        description: err.message,
-      });
+      toast.error("Failed to create server", { description: err.message });
     },
   });
 
@@ -120,37 +112,26 @@ const CreateServer = () => {
       toast.error("Server name is required");
       return;
     }
-
     if (!/^[a-z0-9-]+$/.test(name.trim())) {
       toast.error("Invalid server name");
       return;
     }
 
-    deploy({
-      name: name.trim(),
-      cpu,
-      ram,
-      storage,
-      region,
-      os,
-    });
+    deploy({ name: name.trim(), cpu, ram, storage, region, os });
   };
+
+  const estimatedPrice = estimatePrice(cpu, ram, storage);
 
   if (loading) return <FormSkeleton />;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="max-w-xl space-y-6"
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-xl space-y-6">
       {/* Back button */}
       <button
         onClick={() => navigate("/dashboard/vms")}
         className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Virtual Machines
+        <ArrowLeft className="h-4 w-4" /> Back to Virtual Machines
       </button>
 
       {/* Title */}
@@ -163,19 +144,13 @@ const CreateServer = () => {
 
       {/* Form */}
       <div className="rounded-xl border p-6 space-y-5">
-
         {/* Server Name */}
         <div className="space-y-2">
           <Label>Server name</Label>
-          <Input
-            placeholder="my-server-01"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={isPending}
-          />
+          <Input value={name} onChange={(e) => setName(e.target.value)} disabled={isPending} />
         </div>
 
-        {/* OS */}
+        {/* Operating System */}
         <div className="space-y-2">
           <Label>Operating System</Label>
           <Select value={os} onValueChange={setOs}>
@@ -255,7 +230,7 @@ const CreateServer = () => {
           </Select>
         </div>
 
-        {/* Price */}
+        {/* Estimated Price */}
         <div className="flex justify-between text-sm">
           <span>Estimated Cost</span>
           <span className="font-bold">${estimatedPrice}/month</span>
@@ -263,19 +238,8 @@ const CreateServer = () => {
 
         {/* Deploy Button */}
         <Button onClick={handleDeploy} className="w-full" disabled={isPending}>
-          {isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Deploying...
-            </>
-          ) : (
-            <>
-              <Rocket className="h-4 w-4 mr-2" />
-              Deploy Server
-            </>
-          )}
+          {isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : "Deploy Server"}
         </Button>
-
       </div>
     </motion.div>
   );
