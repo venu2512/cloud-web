@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const nodemailer = require("nodemailer");
 
 const hasSmtpConfig =
@@ -45,3 +46,10 @@ const sendOtpEmail = async ({ to, otp }) => {
 };
 
 module.exports = { sendOtpEmail };
+=======
+const { Resend } = require("resend");
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+module.exports = resend;
+>>>>>>> 8079725 (backend/.envbackenfrontend/src/pages/Dashboard.tsxd/sbackend/config/mail.jserver.jsffrontend/src/pages/Monitoring.tsxrontenfrontend/src/pages/VirtualMachines.tsxd/src/pages/Login.tsxfrfrfrontend/src/config/api.tsontend/src/main.tsxonfrontend/src/pages/Signup.tsxtend/README.md)

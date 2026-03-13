@@ -32,11 +32,16 @@ app.use("/api", limiter);
 
 // ================= MIDDLEWARE =================
 
+<<<<<<< HEAD
  const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+=======
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+>>>>>>> 8079725 (backend/.envbackenfrontend/src/pages/Dashboard.tsxd/sbackend/config/mail.jserver.jsffrontend/src/pages/Monitoring.tsxrontenfrontend/src/pages/VirtualMachines.tsxd/src/pages/Login.tsxfrfrfrontend/src/config/api.tsontend/src/main.tsxonfrontend/src/pages/Signup.tsxtend/README.md)
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+<<<<<<< HEAD
 const isOriginAllowed = (origin) => {
   if (!origin || allowedOrigins.length === 0) {
     return true;
@@ -62,6 +67,11 @@ const isOriginAllowed = (origin) => {
 app.use(cors({
   origin(origin, callback) {
     if (isOriginAllowed(origin)) {
+=======
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+>>>>>>> 8079725 (backend/.envbackenfrontend/src/pages/Dashboard.tsxd/sbackend/config/mail.jserver.jsffrontend/src/pages/Monitoring.tsxrontenfrontend/src/pages/VirtualMachines.tsxd/src/pages/Login.tsxfrfrfrontend/src/config/api.tsontend/src/main.tsxonfrontend/src/pages/Signup.tsxtend/README.md)
       return callback(null, true);
     }
 
