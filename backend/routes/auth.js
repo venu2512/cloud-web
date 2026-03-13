@@ -3,11 +3,7 @@ const router = express.Router();
 
 const User = require("../models/User");
 const Otp = require("../models/Otp");
-<<<<<<< HEAD
 const { sendOtpEmail } = require("../config/mail");
-=======
-const resend = require("../config/mail");
->>>>>>> be13f7b (backend/config/mail.js)
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -15,7 +11,6 @@ const jwt = require("jsonwebtoken");
 // ================= REGISTER =================
 router.post("/register", async (req, res) => {
   try {
-
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
@@ -40,21 +35,15 @@ router.post("/register", async (req, res) => {
     await user.save();
 
     res.json({ message: "User registered successfully" });
-
   } catch (error) {
-
     console.error("Register Error:", error);
     res.status(500).json({ message: "Server error" });
-
   }
 });
 
-
 // ================= LOGIN =================
 router.post("/login", async (req, res) => {
-
   try {
-
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
@@ -85,56 +74,22 @@ router.post("/login", async (req, res) => {
     res.json({ message: "OTP sent to your email" });
 
     // Send email in background
-<<<<<<< HEAD
-      sendOtpEmail({ to: email, otp })
+    sendOtpEmail({ to: email, otp })
       .then(() => {
-        console.log(`✅ OTP email sent to ${email}`);
+        console.log(`OTP email sent to ${email}`);
       })
       .catch((err) => {
-        console.error("❌ Email failed:", err.message);
+        console.error("Email failed:", err.message);
       });
-=======
-    resend.emails.send({
-      from: "CloudNova <onboarding@resend.dev>",
-      to: email,
-      subject: "Your Login OTP - CloudNova",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 400px; margin: auto; padding: 20px;">
-          <h2 style="color:#0050FF;">CloudNova</h2>
-          <p>Your one-time login password is:</p>
-          <h1 style="font-size:48px; letter-spacing:8px; color:#00C8FF; text-align:center;">
-            ${otp}
-          </h1>
-          <p style="color:#666;">This OTP expires in <strong>5 minutes</strong>.</p>
-          <p style="color:#999; font-size:12px;">
-            If you didn't request this login, please ignore this email.
-          </p>
-        </div>
-      `
-    })
-    .then(() => {
-      console.log(`✅ OTP email sent to ${email}`);
-    })
-    .catch((err) => {
-      console.error("❌ Email failed:", err.message);
-    });
->>>>>>> be13f7b (backend/config/mail.js)
-
   } catch (error) {
-
     console.error("Login Error:", error);
     res.status(500).json({ message: "Server error" });
-
   }
-
 });
-
 
 // ================= VERIFY OTP =================
 router.post("/verify-otp", async (req, res) => {
-
   try {
-
     const { email, otp } = req.body;
 
     const validOtp = await Otp.findOne({
@@ -168,14 +123,10 @@ router.post("/verify-otp", async (req, res) => {
         email: user.email
       }
     });
-
   } catch (error) {
-
     console.error("OTP Verify Error:", error);
     res.status(500).json({ message: "Server error" });
-
   }
-
 });
 
 module.exports = router;
