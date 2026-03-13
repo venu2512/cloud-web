@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 
-const BACKEND = "https://cloud-nova.onrender.com";
+import API_BASE_URL from "@/config/api";
+
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -14,9 +15,9 @@ const Signup = () => {
 
   // Keep backend alive while on signup page
   useEffect(() => {
-    fetch(`${BACKEND}/`).catch(() => {});
+     fetch(`${API_BASE_URL}/`).catch(() => {});
     const interval = setInterval(() => {
-      fetch(`${BACKEND}/`).catch(() => {});
+     fetch(`${API_BASE_URL}/`).catch(() => {});
     }, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
@@ -32,7 +33,7 @@ const Signup = () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60000); // 60s for cold start
 
-      const res = await fetch(`${BACKEND}/api/auth/register`, {
+       const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),

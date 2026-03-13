@@ -63,6 +63,16 @@ This project is built with:
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Vercel + Render setup (recommended)
+
+1. Deploy backend on Render.
+2. Set backend env var `ALLOWED_ORIGINS` to your Vercel domain(s), e.g.:
+   - `https://your-app.vercel.app,https://*.vercel.app`
+3. Deploy frontend on Vercel.
+4. Set frontend env var `VITE_API_BASE_URL` to your Render backend URL, e.g.:
+   - `https://your-backend.onrender.com`
+
+If both vars are set correctly, frontend and backend will connect in production.
 
 ## Can I connect a custom domain to my Lovable project?
 

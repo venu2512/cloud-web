@@ -31,9 +31,21 @@ const limiter = rateLimit({
 app.use("/api", limiter);
 
 // ================= MIDDLEWARE =================
+
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: "*", // change later to your Vercel domain
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("CORS not allowed"));
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 

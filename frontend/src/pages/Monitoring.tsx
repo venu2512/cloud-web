@@ -14,7 +14,7 @@ import {
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MonitoringSkeleton } from "@/components/dashboard/DashboardSkeleton";
-
+import API_BASE_URL from "@/config/api";
 interface MetricPoint { time: string; value: number; }
 interface NetworkPoint { time: string; inbound: number; outbound: number; }
 interface VMMetric { id: string; name: string; region: string; cpu: number; ram: number; network: number; uptime: string; }
@@ -37,7 +37,7 @@ const MOCK_DATA = generateMockData();
 const fetchMonitoringData = async (): Promise<MonitoringData> => {
   try {
    const token = localStorage.getItem("token");
-const res = await fetch("https://cloud-nova.onrender.com/api/monitoring/metrics", {
+const res = await fetch(`${API_BASE_URL}/api/monitoring/metrics`, {
   headers: { "Authorization": `Bearer ${token}` },
 });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

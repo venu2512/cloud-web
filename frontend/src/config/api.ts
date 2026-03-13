@@ -1,19 +1,24 @@
-// src/config/api.ts
+const DEFAULT_BACKEND_URL = "https://cloud-nova.onrender.com";
 
-// Backend URL
-const API =
-  import.meta.env.VITE_API_URL ||
-  "https://cloud-nova.onrender.com";
+const normalizeUrl = (url: string) => url.replace(/\/$/, "");
 
-// Ping backend every 10 minutes to keep it awake
-export const keepAlive = () => {
-  setInterval(async () => {
-    try {
-      await fetch(`${API}/`);
-    } catch (e) {
-      console.log("KeepAlive failed");
-    }
-  }, 10 * 60 * 1000); // 10 minutes
+const configuredApiUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+
+export const API_BASE_URL = configuredApiUrl
+  ? normalizeUrl(configuredApiUrl)
+  : DEFAULT_BACKEND_URL;
+
+const shouldKeepAlive = API_BASE_URL.startsWith("http");
+
+export const keepBackendAlive = () => {
+  if (!shouldKeepAlive) {
+    return null;
+  }
+
+  const ping = () => fetch(`${API_BASE_URL}/`).catch(() => undefined);
+
+  ping();
+  return window.setInterval(ping, 10 * 60 * 1000);
 };
 
-export default API;
+export default API_BASE_URL;

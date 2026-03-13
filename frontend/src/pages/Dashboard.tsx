@@ -17,7 +17,7 @@ import {
   ChartSkeleton,
 } from "@/components/dashboard/DashboardSkeleton";
 import { Button } from "@/components/ui/button";
-
+import API_BASE_URL from "@/config/api";
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface DashboardStats {
@@ -44,7 +44,7 @@ const API = "https://cloud-nova.onrender.com";
 
 const fetchDashboardMetrics = async (): Promise<DashboardMetrics> => {
   const token = localStorage.getItem("token");
-const res = await fetch("https://cloud-nova.onrender.com/api/dashboard/metrics", {
+const res = await fetch(`${API_BASE_URL}/api/dashboard/metrics`, {
   headers: {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${token}`,

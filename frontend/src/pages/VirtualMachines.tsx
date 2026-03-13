@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { Plus, Play, Square, Trash2, AlertCircle, RefreshCw, AlertTriangle, Server } from "lucide-react";
 import { TableSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { toast } from "sonner";
-
+import API_BASE_URL from "@/config/api";
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface VM {
@@ -18,25 +18,25 @@ interface VM {
   ip: string;
 }
 
+
+
 // ─── API ─────────────────────────────────────────────────────────────────────
 
-const API = "https://cloud-nova.onrender.com";
-
 const fetchVMs = async (): Promise<VM[]> => {
-const res = await fetch(`${API}/api/vms`);
+const res = await fetch(`${API_BASE_URL}/api/vms`);
   if (!res.ok) throw new Error(`Failed to fetch VMs (${res.status})`);
   return res.json();
 };
 
 const toggleVMStatus = async ({ id, status }: { id: string; status: "running" | "stopped" }) => {
   const action = status === "running" ? "stop" : "start";
-  const res = await fetch(`${API}/api/vms/${id}/${action}`, { method: "PUT" });
+    const res = await fetch(`${API_BASE_URL}/api/vms/${id}/${action}`, { method: "PUT" });
   if (!res.ok) throw new Error(`Failed to ${action} VM`);
   return res.json();
 };
 
 const deleteVM = async (id: string) => {
-  const res = await fetch(`${API}/api/vms/${id}`, { method: "DELETE" });
+  const res = await fetch(`${API_BASE_URL}/api/vms/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Failed to delete VM");
   return res.json();
 };

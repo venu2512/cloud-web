@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 
-const BACKEND = "https://cloud-nova.onrender.com";
+import API_BASE_URL from "@/config/api";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,9 +15,9 @@ const Login = () => {
 
   // Keep backend alive
   useEffect(() => {
-    fetch(`${BACKEND}/`).catch(() => {});
+   fetch(`${API_BASE_URL}/`).catch(() => {});
     const interval = setInterval(() => {
-      fetch(`${BACKEND}/`).catch(() => {});
+    fetch(`${API_BASE_URL}/`).catch(() => {});
     }, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
@@ -30,7 +30,7 @@ const Login = () => {
     const timer = setTimeout(() => setSlowWarning(true), 5000);
 
     try {
-      const res = await fetch(`${BACKEND}/api/auth/login`, {
+           const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -64,7 +64,7 @@ const Login = () => {
     const timer = setTimeout(() => setSlowWarning(true), 5000);
 
     try {
-      const res = await fetch(`${BACKEND}/api/auth/verify-otp`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp }),
