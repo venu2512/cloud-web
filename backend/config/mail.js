@@ -1,23 +1,67 @@
-const getMailConfig = () => {
-  const apiKey = process.env.RESEND_API_KEY || process.env.RESEND_KEY;
-  const from = process.env.EMAIL_FROM || process.env.RESEND_FROM;
+const API_KEY_ENV_KEYS = ["RESEND_API_KEY", "RESEND_KEY", "RESEND_TOKEN"];
+const FROM_ENV_KEYS = ["EMAIL_FROM", "RESEND_FROM", "FROM_EMAIL", "RESEND_EMAIL_FROM"];
 
-  return { apiKey, from };
+const normalizeEnvValue = (value) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  // Supports values saved as "value" or 'value' in environment settings.
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+
+  return trimmed;
+};
+
+const readFirstEnv = (keys) => {
+  for (const key of keys) {
+    const value = normalizeEnvValue(process.env[key]);
+    if (value) {
+      return { key, value };
+    }
+  }
+
+  return { key: null, value: "" };
+};
+
+const getMailConfig = () => {
+  const api = readFirstEnv(API_KEY_ENV_KEYS);
+  const from = readFirstEnv(FROM_ENV_KEYS);
+
+  return {
+    apiKey: api.value,
+    from: from.value,
+    apiKeyEnv: api.key,
+    fromEnv: from.key
+  };
 };
 
 const sendOtpEmail = async ({ to, otp }) => {
   const { apiKey, from } = getMailConfig();
 
   if (!apiKey) {
-    throw new Error(
-      "Missing Resend API key. Set RESEND_API_KEY (preferred) or RESEND_KEY"
+    const error = new Error(
+      `Missing Resend API key. Set one of: ${API_KEY_ENV_KEYS.join(", ")}`
     );
+    error.code = "OTP_MAIL_CONFIG_MISSING_API_KEY";
+    throw error;
   }
 
   if (!from) {
-    throw new Error(
-      "Missing sender email. Set EMAIL_FROM (preferred) or RESEND_FROM"
+    const error = new Error(
+      `Missing sender email. Set one of: ${FROM_ENV_KEYS.join(", ")}`
     );
+    error.code = "OTP_MAIL_CONFIG_MISSING_FROM";
+    throw error;
   }
 
   const controller = new AbortController();

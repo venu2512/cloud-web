@@ -74,7 +74,7 @@ router.post("/login", async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000)
     });
 
-  try {
+ try {
       await sendOtpEmail({ to: email, otp });
       console.log(`OTP email sent to ${email}`);
     } catch (err) {
@@ -82,8 +82,8 @@ router.post("/login", async (req, res) => {
       console.error("Email failed:", err.message);
 
       const isConfigError =
-        err.message.includes("Missing Resend API key") ||
-        err.message.includes("Missing sender email");
+        err.code === "OTP_MAIL_CONFIG_MISSING_API_KEY" ||
+        err.code === "OTP_MAIL_CONFIG_MISSING_FROM";
 
       return res.status(isConfigError ? 500 : 502).json({
         message: isConfigError

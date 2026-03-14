@@ -10,9 +10,23 @@ const Stats = require("./models/Stats");
 const { getMailConfig } = require("./config/mail");
 // ================= DEBUG =================
 console.log("JWT SECRET:", process.env.JWT_SECRET ? "✅ Loaded" : "❌ Missing");
-const { apiKey: resendApiKey, from: resendFromEmail } = getMailConfig();
-console.log("RESEND API KEY:", resendApiKey ? "✅ Loaded" : "❌ Missing");
-console.log("EMAIL FROM:", resendFromEmail ? `✅ Loaded (${resendFromEmail})` : "❌ Missing");
+
+const {
+  apiKey: resendApiKey,
+  from: resendFromEmail,
+  apiKeyEnv,
+  fromEnv
+} = getMailConfig();
+console.log(
+  "RESEND API KEY:",
+  resendApiKey ? `✅ Loaded (${apiKeyEnv})` : "❌ Missing (RESEND_API_KEY|RESEND_KEY|RESEND_TOKEN)"
+);
+console.log(
+  "EMAIL FROM:",
+  resendFromEmail
+    ? `✅ Loaded (${fromEnv}: ${resendFromEmail})`
+    : "❌ Missing (EMAIL_FROM|RESEND_FROM|FROM_EMAIL|RESEND_EMAIL_FROM)"
+);
 // ================= APP INIT =================
 const app = express();
 app.set("trust proxy", 1);
