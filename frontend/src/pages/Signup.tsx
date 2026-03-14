@@ -64,11 +64,11 @@ const Signup = () => {
 
       setTimeout(() => navigate("/login"), 1500);
 
-     } catch (error: any) {
+    } catch (error: any) {
       clearTimeout(timer);
       console.error("Signup error:", error);
 
-       if (error instanceof Error && error.name === "AbortError") {
+      if (error instanceof Error && error.name === "AbortError") {
         toast.error("Request timed out", {
           description: "Server took too long to respond. Please try again.",
           duration: 4000,
