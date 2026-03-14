@@ -2,7 +2,7 @@
 
 const sendOtpEmail = async ({ to, otp }) => {
 
-const apiKey = process.env.re_DjqCNHJa_8gpmpfpzDqBrs7JTaNedSksZ;
+const apiKey = process.env.RESEND_API_KEY;
 
 if (!apiKey) {
     throw new Error("Missing RESEND_API_KEY environment variable");
