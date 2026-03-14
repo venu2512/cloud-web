@@ -35,15 +35,18 @@ router.post("/register", async (req, res) => {
     await user.save();
 
     res.json({ message: "User registered successfully" });
+
   } catch (error) {
     console.error("Register Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
+
 // ================= LOGIN =================
 router.post("/login", async (req, res) => {
   try {
+
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
@@ -64,32 +67,45 @@ router.post("/login", async (req, res) => {
     // Remove old OTP
     await Otp.deleteMany({ email });
 
+    // Save OTP
     await Otp.create({
       email,
       otp,
       expiresAt: new Date(Date.now() + 5 * 60 * 1000)
     });
 
-    // Respond immediately
-    res.json({ message: "OTP sent to your email" });
+    // Send OTP email
+    try {
+      await sendOtpEmail({ to: email, otp });
+      console.log(`OTP email sent to ${email}`);
+    } catch (err) {
+      await Otp.deleteMany({ email });
 
-    // Send email in background
-    sendOtpEmail({ to: email, otp })
-      .then(() => {
-        console.log(`OTP email sent to ${email}`);
-      })
-      .catch((err) => {
-        console.error("Email failed:", err.message);
+      console.error("Email failed:", err.message);
+
+      return res.status(502).json({
+        message: "Failed to send OTP email"
       });
+    }
+
+    res.json({
+      message: "OTP sent to your email"
+    });
+
   } catch (error) {
     console.error("Login Error:", error);
-    res.status(500).json({ message: "Server error" });
+
+    res.status(500).json({
+      message: "Server error"
+    });
   }
 });
+
 
 // ================= VERIFY OTP =================
 router.post("/verify-otp", async (req, res) => {
   try {
+
     const { email, otp } = req.body;
 
     const validOtp = await Otp.findOne({
@@ -123,9 +139,13 @@ router.post("/verify-otp", async (req, res) => {
         email: user.email
       }
     });
+
   } catch (error) {
     console.error("OTP Verify Error:", error);
-    res.status(500).json({ message: "Server error" });
+
+    res.status(500).json({
+      message: "Server error"
+    });
   }
 });
 
