@@ -83,12 +83,23 @@ router.post("/login", async (req, res) => {
 
       const isConfigError =
         err.code === "OTP_MAIL_CONFIG_MISSING_API_KEY" ||
-        err.code === "OTP_MAIL_CONFIG_MISSING_FROM";
+        err.code === "OTP_MAIL_CONFIG_MISSING_FROM" ||
+        err.code === "OTP_MAIL_RESEND_TEST_MODE" ||
+        err.code === "OTP_MAIL_RESEND_DOMAIN_UNVERIFIED";
+
+      const messageByCode = {
+        OTP_MAIL_RESEND_TEST_MODE:
+          "OTP email is blocked by Resend test mode. Verify your domain in Resend and set EMAIL_FROM to that domain.",
+        OTP_MAIL_RESEND_DOMAIN_UNVERIFIED:
+          "OTP sender domain is not verified in Resend. Verify domain and use matching EMAIL_FROM."
+      };
 
       return res.status(isConfigError ? 500 : 502).json({
-        message: isConfigError
-          ? "OTP service is not configured on server"
-          : "Failed to send OTP email"
+        message:
+          messageByCode[err.code] ||
+          (isConfigError
+            ? "OTP service is not configured on server"
+            : "Failed to send OTP email")
       });
     }
 

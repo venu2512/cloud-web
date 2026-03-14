@@ -100,7 +100,42 @@ const sendOtpEmail = async ({ to, otp }) => {
 
   if (!response.ok) {
     const responseText = await response.text();
-    throw new Error(`Resend API error: ${response.status} ${responseText}`);
+    const resendMessage = (() => {
+      try {
+        const parsed = JSON.parse(responseText);
+        return parsed.message || parsed.error || "";
+      } catch (_error) {
+        return "";
+      }
+    })();
+
+    const combinedMessage = `${resendMessage} ${responseText}`.toLowerCase();
+
+    if (
+      response.status === 403 &&
+      combinedMessage.includes("you can only send testing emails to your own email address")
+    ) {
+      const error = new Error(
+        "Resend account is in testing mode. Verify a domain in Resend and set EMAIL_FROM to an address on that verified domain."
+      );
+      error.code = "OTP_MAIL_RESEND_TEST_MODE";
+      throw error;
+    }
+
+    if (
+      response.status === 403 &&
+      combinedMessage.includes("verify a domain")
+    ) {
+      const error = new Error(
+        "Resend sender is not verified. Verify your sending domain and use a matching EMAIL_FROM address."
+      );
+      error.code = "OTP_MAIL_RESEND_DOMAIN_UNVERIFIED";
+      throw error;
+    }
+
+    const error = new Error(`Resend API error: ${response.status} ${responseText}`);
+    error.code = "OTP_MAIL_RESEND_API_ERROR";
+    throw error;
   }
 };
 
