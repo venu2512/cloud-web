@@ -80,17 +80,11 @@ router.post("/login", async (req, res) => {
       console.log(`OTP email sent to ${email}`);
     } catch (err) {
       await Otp.deleteMany({ email });
-
       console.error("Email failed:", err.message);
-
-      return res.status(502).json({
-        message: "Failed to send OTP email"
-      });
+      return res.status(502).json({ message: "Failed to send OTP email" });
     }
 
-    res.json({
-      message: "OTP sent to your email"
-    });
+    res.json({ message: "OTP sent to your email" });
 
   } catch (error) {
     console.error("Login Error:", error);
