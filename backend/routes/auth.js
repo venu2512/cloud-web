@@ -74,14 +74,22 @@ router.post("/login", async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000)
     });
 
-    // Send OTP email
-    try {
+  try {
       await sendOtpEmail({ to: email, otp });
       console.log(`OTP email sent to ${email}`);
     } catch (err) {
       await Otp.deleteMany({ email });
       console.error("Email failed:", err.message);
-      return res.status(502).json({ message: "Failed to send OTP email" });
+
+      const isConfigError =
+        err.message.includes("Missing Resend API key") ||
+        err.message.includes("Missing sender email");
+
+      return res.status(isConfigError ? 500 : 502).json({
+        message: isConfigError
+          ? "OTP service is not configured on server"
+          : "Failed to send OTP email"
+      });
     }
 
     res.json({ message: "OTP sent to your email" });

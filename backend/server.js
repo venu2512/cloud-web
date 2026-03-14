@@ -7,10 +7,12 @@ const rateLimit = require("express-rate-limit");
 
 const connectDB = require("./config/db");
 const Stats = require("./models/Stats");
-
+const { getMailConfig } = require("./config/mail");
 // ================= DEBUG =================
 console.log("JWT SECRET:", process.env.JWT_SECRET ? "✅ Loaded" : "❌ Missing");
-
+const { apiKey: resendApiKey, from: resendFromEmail } = getMailConfig();
+console.log("RESEND API KEY:", resendApiKey ? "✅ Loaded" : "❌ Missing");
+console.log("EMAIL FROM:", resendFromEmail ? `✅ Loaded (${resendFromEmail})` : "❌ Missing");
 // ================= APP INIT =================
 const app = express();
 app.set("trust proxy", 1);
