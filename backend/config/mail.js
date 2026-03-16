@@ -2,7 +2,7 @@ const RESEND_API_KEY_ENV_KEYS = ["RESEND_API_KEY", "RESEND_KEY", "RESEND_TOKEN"]
 const BREVO_API_KEY_ENV_KEYS = ["BREVO_API_KEY", "SENDINBLUE_API_KEY", "SIB_API_KEY"];
 const FROM_ENV_KEYS = ["EMAIL_FROM", "RESEND_FROM", "FROM_EMAIL", "RESEND_EMAIL_FROM", "BREVO_FROM"];
 
-const normalizeEnvValue = (value) => {
+const normalizeEnvValue = (value, envKey) => {
   if (typeof value !== "string") {
     return "";
   }
@@ -12,19 +12,41 @@ const normalizeEnvValue = (value) => {
     return "";
   }
 
+  let normalized = trimmed;
+
   if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    (normalized.startsWith('"') && normalized.endsWith('"')) ||
+    (normalized.startsWith("'") && normalized.endsWith("'"))
   ) {
-    return trimmed.slice(1, -1).trim();
+    normalized = normalized.slice(1, -1).trim();
   }
 
-  return trimmed;
+  if (/\r|\n/.test(normalized)) {
+    const lines = normalized
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    const ownKeyLine = envKey
+      ? lines.find((line) => line.startsWith(`${envKey}=`))
+      : null;
+
+    if (ownKeyLine) {
+      normalized = ownKeyLine.slice(ownKeyLine.indexOf("=") + 1).trim();
+    } else {
+      normalized = lines[lines.length - 1] || "";
+      if (normalized.includes("=") && !normalized.includes(" ")) {
+        normalized = normalized.slice(normalized.indexOf("=") + 1).trim();
+      }
+    }
+  }
+
+  return normalized;
 };
 
 const readFirstEnv = (keys) => {
   for (const key of keys) {
-    const value = normalizeEnvValue(process.env[key]);
+    const value = normalizeEnvValue(process.env[key], key);
     if (value) {
       return { key, value };
     }
@@ -58,6 +80,24 @@ const getMailConfig = () => {
     resendApiKeyEnv: resend.key,
     brevoApiKeyEnv: brevo.key
   };
+};
+
+const sanitizeHeaderValue = (value, label) => {
+  const normalized = normalizeEnvValue(value);
+
+  if (!normalized) {
+    return "";
+  }
+
+  if (/[^\t\x20-\x7e]/.test(normalized)) {
+    const error = new Error(
+      `${label} contains invalid characters. Re-enter the environment variable in Render as a single-line value.`
+    );
+    error.code = "OTP_MAIL_CONFIG_INVALID_HEADER";
+    throw error;
+  }
+
+  return normalized;
 };
 
 const sendViaResend = async ({ apiKey, from, to, otp, signal }) => {
@@ -174,15 +214,18 @@ const sendOtpEmail = async ({ to, otp }) => {
     throw error;
   }
 
+  const safeApiKey = sanitizeHeaderValue(apiKey, `${provider.toUpperCase()} API key`);
+  const safeFrom = sanitizeHeaderValue(from, "EMAIL_FROM");
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
 
   try {
     if (provider === "brevo") {
-      return await sendViaBrevo({ apiKey, from, to, otp, signal: controller.signal });
+      return await sendViaBrevo({ apiKey: safeApiKey, from: safeFrom, to, otp, signal: controller.signal });
     }
 
-    return await sendViaResend({ apiKey, from, to, otp, signal: controller.signal });
+    return await sendViaResend({ apiKey: safeApiKey, from: safeFrom, to, otp, signal: controller.signal });
   } catch (error) {
     if (error.name === "AbortError") {
       const timeoutError = new Error(`${provider} API timeout after 10 seconds`);

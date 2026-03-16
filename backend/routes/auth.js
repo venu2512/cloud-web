@@ -8,12 +8,14 @@ const { sendOtpEmail } = require("../config/mail");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const isEnabled = (value) => {
+ 
   if (typeof value !== "string") {
     return false;
   }
 
   return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
 };
+
 
 // ================= REGISTER =================
 router.post("/register", async (req, res) => {
@@ -90,6 +92,7 @@ router.post("/login", async (req, res) => {
       const isConfigError =
         err.code === "OTP_MAIL_CONFIG_MISSING_API_KEY" ||
         err.code === "OTP_MAIL_CONFIG_MISSING_FROM" ||
+        err.code === "OTP_MAIL_CONFIG_INVALID_HEADER" ||
         err.code === "OTP_MAIL_RESEND_TEST_MODE" ||
         err.code === "OTP_MAIL_RESEND_DOMAIN_UNVERIFIED";
 
@@ -112,6 +115,8 @@ router.post("/login", async (req, res) => {
       await Otp.deleteMany({ email });
 
       const messageByCode = {
+        OTP_MAIL_CONFIG_INVALID_HEADER:
+          "Mail configuration value is malformed (likely pasted with line breaks). Re-enter API key and EMAIL_FROM as single-line values.",
         OTP_MAIL_RESEND_TEST_MODE:
           "OTP email is blocked by Resend test mode. Verify your domain in Resend and set EMAIL_FROM to that domain.",
         OTP_MAIL_RESEND_DOMAIN_UNVERIFIED:
@@ -128,7 +133,6 @@ router.post("/login", async (req, res) => {
     }
 
     res.json({ message: "OTP sent to your email" });
-
   } catch (error) {
     console.error("Login Error:", error);
 
