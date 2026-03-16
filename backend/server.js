@@ -12,20 +12,35 @@ const { getMailConfig } = require("./config/mail");
 console.log("JWT SECRET:", process.env.JWT_SECRET ? "✅ Loaded" : "❌ Missing");
 
 const {
-  apiKey: resendApiKey,
-  from: resendFromEmail,
+  provider,
+  providerSource,
+  apiKey,
+  from,
   apiKeyEnv,
-  fromEnv
+  fromEnv,
+  resendApiKeyEnv,
+  brevoApiKeyEnv
 } = getMailConfig();
+console.log("OTP MAIL PROVIDER:", `${provider} (OTP_MAIL_PROVIDER=${providerSource || "auto"})`);
 console.log(
-  "RESEND API KEY:",
-  resendApiKey ? `✅ Loaded (${apiKeyEnv})` : "❌ Missing (RESEND_API_KEY|RESEND_KEY|RESEND_TOKEN)"
+  "MAIL API KEY:",
+  apiKey
+    ? `✅ Loaded (${apiKeyEnv})`
+    : "❌ Missing (Resend: RESEND_API_KEY|RESEND_KEY|RESEND_TOKEN, Brevo: BREVO_API_KEY|SENDINBLUE_API_KEY|SIB_API_KEY)"
 );
+console.log("RESEND KEY DETECTED:", resendApiKeyEnv ? `✅ ${resendApiKeyEnv}` : "❌ No");
+console.log("BREVO KEY DETECTED:", brevoApiKeyEnv ? `✅ ${brevoApiKeyEnv}` : "❌ No");
 console.log(
   "EMAIL FROM:",
-  resendFromEmail
-    ? `✅ Loaded (${fromEnv}: ${resendFromEmail})`
-    : "❌ Missing (EMAIL_FROM|RESEND_FROM|FROM_EMAIL|RESEND_EMAIL_FROM)"
+  from
+    ? `✅ Loaded (${fromEnv}: ${from})`
+    : "❌ Missing (EMAIL_FROM|RESEND_FROM|FROM_EMAIL|RESEND_EMAIL_FROM|BREVO_FROM)"
+);
+console.log(
+  "OTP TEST MODE FALLBACK:",
+  process.env.ALLOW_OTP_LOGIN_WITHOUT_EMAIL
+    ? `⚠️ Enabled (${process.env.ALLOW_OTP_LOGIN_WITHOUT_EMAIL})`
+    : "Disabled"
 );
 // ================= APP INIT =================
 const app = express();
