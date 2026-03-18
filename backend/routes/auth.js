@@ -109,9 +109,7 @@ router.post("/login", async (req, res) => {
       await Otp.deleteMany({ email });
 
       return res.status(500).json({
-        message: err.message.includes("testing mode")
-          ? "Resend is in testing mode. Use your email or verify domain."
-          : "Failed to send OTP email",
+        message: "Failed to send OTP email",
       });
     }
 
