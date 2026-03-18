@@ -7,41 +7,21 @@ const rateLimit = require("express-rate-limit");
 
 const connectDB = require("./config/db");
 const Stats = require("./models/Stats");
-const { getMailConfig } = require("./config/mail");
+
 // ================= DEBUG =================
 console.log("JWT SECRET:", process.env.JWT_SECRET ? "✅ Loaded" : "❌ Missing");
-
-const {
-  provider,
-  providerSource,
-  apiKey,
-  from,
-  apiKeyEnv,
-  fromEnv,
-  resendApiKeyEnv,
-  brevoApiKeyEnv
-} = getMailConfig();
-console.log("OTP MAIL PROVIDER:", `${provider} (OTP_MAIL_PROVIDER=${providerSource || "auto"})`);
-console.log(
-  "MAIL API KEY:",
-  apiKey
-    ? `✅ Loaded (${apiKeyEnv})`
-    : "❌ Missing (Resend: RESEND_API_KEY|RESEND_KEY|RESEND_TOKEN, Brevo: BREVO_API_KEY|SENDINBLUE_API_KEY|SIB_API_KEY)"
-);
-console.log("RESEND KEY DETECTED:", resendApiKeyEnv ? `✅ ${resendApiKeyEnv}` : "❌ No");
-console.log("BREVO KEY DETECTED:", brevoApiKeyEnv ? `✅ ${brevoApiKeyEnv}` : "❌ No");
+console.log("RESEND API KEY:", process.env.RESEND_API_KEY ? "✅ Loaded" : "❌ Missing");
 console.log(
   "EMAIL FROM:",
-  from
-    ? `✅ Loaded (${fromEnv}: ${from})`
-    : "❌ Missing (EMAIL_FROM|RESEND_FROM|FROM_EMAIL|RESEND_EMAIL_FROM|BREVO_FROM)"
+  process.env.EMAIL_FROM || "⚠️ Using default (onboarding@resend.dev)"
 );
 console.log(
-  "OTP TEST MODE FALLBACK:",
-  process.env.ALLOW_OTP_LOGIN_WITHOUT_EMAIL
-    ? `⚠️ Enabled (${process.env.ALLOW_OTP_LOGIN_WITHOUT_EMAIL})`
+  "OTP FALLBACK:",
+  process.env.ALLOW_OTP_LOGIN_WITHOUT_EMAIL === "true"
+    ? "⚠️ Enabled"
     : "Disabled"
 );
+
 // ================= APP INIT =================
 const app = express();
 app.set("trust proxy", 1);
@@ -51,20 +31,17 @@ app.use(helmet());
 
 // ================= RATE LIMIT =================
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: {
     message: "Too many requests, please try again later."
   }
 });
 
-// Apply rate limit only to API
 app.use("/api", limiter);
 
-// ================= MIDDLEWARE =================
-
-
- const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+// ================= CORS =================
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
@@ -75,13 +52,9 @@ const isOriginAllowed = (origin) => {
   }
 
   return allowedOrigins.some((pattern) => {
-    if (pattern === origin) {
-      return true;
-    }
+    if (pattern === origin) return true;
 
-    if (!pattern.includes("*")) {
-      return false;
-    }
+    if (!pattern.includes("*")) return false;
 
     const regexPattern = `^${pattern
       .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
@@ -94,16 +67,15 @@ const isOriginAllowed = (origin) => {
 app.use(cors({
   origin(origin, callback) {
     if (isOriginAllowed(origin)) {
-
       return callback(null, true);
     }
-
     return callback(new Error("CORS not allowed"));
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
+// ================= BODY PARSER =================
 app.use(express.json());
 
 // ================= HEALTH CHECK =================
@@ -120,7 +92,6 @@ app.use("/api/monitoring", require("./routes/monitoring"));
 // ================= LEGACY STATS =================
 app.get("/api/stats", async (req, res) => {
   try {
-
     let stats = await Stats.findOne();
 
     if (!stats) {
@@ -135,13 +106,11 @@ app.get("/api/stats", async (req, res) => {
     res.json(stats);
 
   } catch (error) {
-
     console.error("Stats Error:", error);
 
     res.status(500).json({
       message: "Server Error"
     });
-
   }
 });
 
@@ -156,11 +125,8 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-
   try {
-
     console.log("Connecting to MongoDB...");
-
     await connectDB();
 
     app.listen(PORT, "0.0.0.0", () => {
@@ -168,13 +134,9 @@ const startServer = async () => {
     });
 
   } catch (err) {
-
     console.error("❌ MongoDB failed to connect:", err.message);
-
     process.exit(1);
-
   }
-
 };
 
 startServer();

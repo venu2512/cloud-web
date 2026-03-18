@@ -7,15 +7,6 @@ const { sendOtpEmail } = require("../config/mail");
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const isEnabled = (value) => {
- 
-  if (typeof value !== "string") {
-    return false;
-  }
-
-  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
-};
-
 
 // ================= REGISTER =================
 router.post("/register", async (req, res) => {
@@ -55,7 +46,6 @@ router.post("/register", async (req, res) => {
 // ================= LOGIN =================
 router.post("/login", async (req, res) => {
   try {
-
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
@@ -83,56 +73,34 @@ router.post("/login", async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000)
     });
 
-  try {
+    // 👉 EMAIL SEND
+    try {
       await sendOtpEmail({ to: email, otp });
-      console.log(`OTP email sent to ${email}`);
+      console.log(`✅ OTP email sent to ${email}`);
+
+      return res.json({ message: "OTP sent to your email" });
+
     } catch (err) {
-      console.error("Email failed:", err.message);
+      console.error("❌ Email failed:", err.message);
 
-      const isConfigError =
-        err.code === "OTP_MAIL_CONFIG_MISSING_API_KEY" ||
-        err.code === "OTP_MAIL_CONFIG_MISSING_FROM" ||
-        err.code === "OTP_MAIL_CONFIG_INVALID_HEADER" ||
-        err.code === "OTP_MAIL_RESEND_TEST_MODE" ||
-        err.code === "OTP_MAIL_RESEND_DOMAIN_UNVERIFIED";
-
-      const allowOtpLogFallback =
-        err.code === "OTP_MAIL_RESEND_TEST_MODE" &&
-        isEnabled(process.env.ALLOW_OTP_LOGIN_WITHOUT_EMAIL);
-
-      if (allowOtpLogFallback) {
-        console.warn(
-          `OTP fallback enabled (ALLOW_OTP_LOGIN_WITHOUT_EMAIL). OTP for ${email}: ${otp}`
-        );
+      if (process.env.ALLOW_OTP_LOGIN_WITHOUT_EMAIL === "true") {
+        console.warn(`⚠️ OTP fallback enabled. OTP for ${email}: ${otp}`);
 
         return res.json({
-          message:
-            "OTP generated in server logs because email provider is in test mode. Check logs for OTP.",
-          deliveryMode: "log_fallback"
+          message: "OTP generated. Check server logs.",
+          deliveryMode: "log_fallback",
         });
       }
 
       await Otp.deleteMany({ email });
 
-      const messageByCode = {
-        OTP_MAIL_CONFIG_INVALID_HEADER:
-          "Mail configuration value is malformed (likely pasted with line breaks). Re-enter API key and EMAIL_FROM as single-line values.",
-        OTP_MAIL_RESEND_TEST_MODE:
-          "OTP email is blocked by Resend test mode. Verify your domain in Resend and set EMAIL_FROM to that domain.",
-        OTP_MAIL_RESEND_DOMAIN_UNVERIFIED:
-          "OTP sender domain is not verified in Resend. Verify domain and use matching EMAIL_FROM."
-      };
-
-      return res.status(isConfigError ? 500 : 502).json({
-        message:
-          messageByCode[err.code] ||
-          (isConfigError
-            ? "OTP service is not configured on server"
-            : "Failed to send OTP email")
+      return res.status(500).json({
+        message: err.message.includes("testing mode")
+          ? "Resend is in testing mode. Use your email or verify domain."
+          : "Failed to send OTP email",
       });
     }
 
-    res.json({ message: "OTP sent to your email" });
   } catch (error) {
     console.error("Login Error:", error);
 
@@ -146,7 +114,6 @@ router.post("/login", async (req, res) => {
 // ================= VERIFY OTP =================
 router.post("/verify-otp", async (req, res) => {
   try {
-
     const { email, otp } = req.body;
 
     const validOtp = await Otp.findOne({
