@@ -84,12 +84,26 @@ router.post("/login", async (req, res) => {
       console.error("❌ Email failed:", err.message);
 
       if (process.env.ALLOW_OTP_LOGIN_WITHOUT_EMAIL === "true") {
-        console.warn(`⚠️ OTP fallback enabled. OTP for ${email}: ${otp}`);
+        const debugOtp = process.env.DEBUG_OTP === "true";
+        
+        console.warn(`⚠️ OTP fallback enabled for ${email}`);
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        console.log(`📧 Email: ${email}`);
+        console.log(`🔐 OTP:   ${otp}`);
+        console.log(`⏰ Expires in 5 minutes`);
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
-        return res.json({
+        const response = {
           message: "OTP generated. Check server logs.",
           deliveryMode: "log_fallback",
-        });
+        };
+
+        if (debugOtp) {
+          response.otp = otp;
+          response.message = "OTP generated (debug mode)";
+        }
+
+        return res.json(response);
       }
 
       await Otp.deleteMany({ email });
