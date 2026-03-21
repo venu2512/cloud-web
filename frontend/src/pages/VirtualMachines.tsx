@@ -11,11 +11,10 @@ import {
   AlertCircle,
   RefreshCw,
   AlertTriangle,
-  Server,
 } from "lucide-react";
 import { TableSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { toast } from "sonner";
-import { API_BASE_URL } from "@/config/api"; // ✅ FIXED IMPORT
+import { API_BASE_URL } from "@/config/api";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -28,19 +27,35 @@ interface VM {
   ip: string;
 }
 
-// ─── API ─────────────────────────────────────────────────────────────────────
+// ─── AUTH HELPER (✅ IMPORTANT FIX) ───────────────────────────────────────────
 
-const fetchVMs = async (): Promise<VM[]> => {
-  const res = await fetch(`${API_BASE_URL}/api/vms`, {
-    headers: { "Content-Type": "application/json" },
+const getToken = () => localStorage.getItem("token");
+
+// Reusable fetch with auth
+const authFetch = async (url: string, options: RequestInit = {}) => {
+  const token = getToken();
+
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token ? `Bearer ${token}` : "",
+      ...options.headers,
+    },
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => null);
-    throw new Error(err?.message || `Failed to fetch VMs (${res.status})`);
+    throw new Error(err?.message || `Request failed (${res.status})`);
   }
 
   return res.json();
+};
+
+// ─── API ─────────────────────────────────────────────────────────────────────
+
+const fetchVMs = async (): Promise<VM[]> => {
+  return authFetch(`${API_BASE_URL}/api/vms`);
 };
 
 const toggleVMStatus = async ({
@@ -51,32 +66,15 @@ const toggleVMStatus = async ({
   status: "running" | "stopped";
 }) => {
   const action = status === "running" ? "stop" : "start";
-
-  const res = await fetch(`${API_BASE_URL}/api/vms/${id}/${action}`, {
+  return authFetch(`${API_BASE_URL}/api/vms/${id}/${action}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
   });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => null);
-    throw new Error(err?.message || `Failed to ${action} VM`);
-  }
-
-  return res.json();
 };
 
 const deleteVM = async (id: string) => {
-  const res = await fetch(`${API_BASE_URL}/api/vms/${id}`, {
+  return authFetch(`${API_BASE_URL}/api/vms/${id}`, {
     method: "DELETE",
-    headers: { "Content-Type": "application/json" },
   });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => null);
-    throw new Error(err?.message || "Failed to delete VM");
-  }
-
-  return res.json();
 };
 
 // ─── Confirm Dialog ───────────────────────────────────────────────────────────
@@ -98,32 +96,21 @@ const ConfirmDeleteDialog = ({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="relative z-10 rounded-xl border border-border bg-card p-6 shadow-2xl w-full max-w-sm mx-4"
+      className="relative z-10 rounded-xl border bg-card p-6 shadow-2xl w-full max-w-sm"
     >
-      <div className="flex items-center gap-3 mb-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
-          <AlertTriangle className="h-5 w-5 text-destructive" />
-        </div>
-        <h3 className="font-semibold text-foreground">Delete VM</h3>
-      </div>
+      <h3 className="font-semibold mb-3 flex items-center gap-2">
+        <AlertTriangle className="text-destructive" /> Delete VM
+      </h3>
 
-      <p className="text-sm text-muted-foreground mb-5">
-        Delete{" "}
-        <span className="font-mono font-semibold text-foreground">
-          {vmName}
-        </span>
-        ? This cannot be undone.
+      <p className="text-sm mb-4">
+        Delete <b>{vmName}</b>? This cannot be undone.
       </p>
 
-      <div className="flex gap-3 justify-end">
-        <Button variant="outline" size="sm" onClick={onCancel}>
+      <div className="flex justify-end gap-2">
+        <Button size="sm" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button
-          size="sm"
-          className="bg-destructive text-destructive-foreground"
-          onClick={onConfirm}
-        >
+        <Button size="sm" onClick={onConfirm}>
           Delete
         </Button>
       </div>
@@ -140,18 +127,14 @@ const ErrorState = ({
   message: string;
   onRetry: () => void;
 }) => (
-  <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-      <AlertCircle className="h-6 w-6 text-destructive" />
-    </div>
-    <div>
-      <p className="font-semibold text-foreground">Failed to load VMs</p>
-      <p className="text-sm text-muted-foreground mt-1">
-        {message || "Server unreachable"}
-      </p>
-    </div>
-    <Button variant="outline" size="sm" onClick={onRetry}>
-      <RefreshCw className="h-4 w-4 mr-1" /> Retry
+  <div className="text-center py-20">
+    <AlertCircle className="mx-auto mb-3 text-destructive" />
+    <p className="font-semibold">Failed to load VMs</p>
+    <p className="text-sm text-muted-foreground">{message}</p>
+
+    <Button onClick={() => onRetry()} className="mt-4">
+      <RefreshCw className="mr-1 h-4 w-4" />
+      Retry
     </Button>
   </div>
 );
@@ -162,7 +145,7 @@ const VirtualMachines = () => {
   const queryClient = useQueryClient();
 
   const [confirmDelete, setConfirmDelete] = useState<VM | null>(null);
-  const [loadingId, setLoadingId] = useState<string | null>(null); // ✅ per-row loading
+  const [loadingId, setLoadingId] = useState<string | null>(null);
 
   // ── Fetch ──
   const { data: vms, isLoading, isError, error, refetch } = useQuery({
@@ -196,11 +179,6 @@ const VirtualMachines = () => {
       queryClient.setQueryData(["vms"], context?.previous);
       toast.error(err.message);
     },
-    onSuccess: (_data, { status }) => {
-      toast.success(
-        `VM ${status === "running" ? "stopped" : "started"} successfully`
-      );
-    },
     onSettled: () => {
       setLoadingId(null);
       queryClient.invalidateQueries({ queryKey: ["vms"] });
@@ -226,9 +204,6 @@ const VirtualMachines = () => {
       queryClient.setQueryData(["vms"], context?.previous);
       toast.error(err.message);
     },
-    onSuccess: () => {
-      toast.success("VM deleted successfully");
-    },
     onSettled: () => {
       setLoadingId(null);
       setConfirmDelete(null);
@@ -236,15 +211,13 @@ const VirtualMachines = () => {
     },
   });
 
-  // ── Loading ──
   if (isLoading) return <TableSkeleton />;
 
-  // ── Error ──
   if (isError)
     return (
       <ErrorState
         message={(error as Error)?.message}
-        onRetry={refetch}
+        onRetry={() => refetch()} // ✅ FIXED
       />
     );
 
@@ -258,28 +231,26 @@ const VirtualMachines = () => {
         />
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Header */}
         <div className="flex justify-between">
-          <h2 className="text-xl font-bold">
-            Virtual Machines ({vms?.length ?? 0})
-          </h2>
+          <h2 className="font-bold">VMs ({vms?.length ?? 0})</h2>
 
           <div className="flex gap-2">
             <Button onClick={() => refetch()}>
               <RefreshCw className="h-4 w-4" />
             </Button>
 
-            <Button asChild size="sm">
+            <Button asChild>
               <Link to="/dashboard/vms/create">
-                <Plus className="h-4 w-4 mr-1" />
+                <Plus className="mr-1 h-4 w-4" />
                 Create
               </Link>
             </Button>
           </div>
         </div>
 
-        {/* Table */}
+        {/* List */}
         {vms?.map((vm) => (
           <div key={vm.id} className="flex justify-between border p-3 rounded">
             <div>
