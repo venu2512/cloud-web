@@ -27,11 +27,10 @@ interface VM {
   ip: string;
 }
 
-// ─── AUTH HELPER (✅ IMPORTANT FIX) ───────────────────────────────────────────
+// ─── AUTH ───────────────────────────────────────────────────────────────────
 
 const getToken = () => localStorage.getItem("token");
 
-// Reusable fetch with auth
 const authFetch = async (url: string, options: RequestInit = {}) => {
   const token = getToken();
 
@@ -96,21 +95,21 @@ const ConfirmDeleteDialog = ({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="relative z-10 rounded-xl border bg-card p-6 shadow-2xl w-full max-w-sm"
+      className="relative z-10 rounded-xl border border-border bg-card p-6 shadow-2xl w-full max-w-sm"
     >
-      <h3 className="font-semibold mb-3 flex items-center gap-2">
-        <AlertTriangle className="text-destructive" /> Delete VM
+      <h3 className="font-semibold mb-3 flex items-center gap-2 text-white">
+        <AlertTriangle className="text-red-400" /> Delete VM
       </h3>
 
-      <p className="text-sm mb-4">
-        Delete <b>{vmName}</b>? This cannot be undone.
+      <p className="text-sm text-gray-300 mb-4">
+        Delete <span className="font-semibold text-white">{vmName}</span>? This cannot be undone.
       </p>
 
       <div className="flex justify-end gap-2">
         <Button size="sm" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button size="sm" onClick={onConfirm}>
+        <Button size="sm" className="bg-red-500 hover:bg-red-600" onClick={onConfirm}>
           Delete
         </Button>
       </div>
@@ -128,9 +127,9 @@ const ErrorState = ({
   onRetry: () => void;
 }) => (
   <div className="text-center py-20">
-    <AlertCircle className="mx-auto mb-3 text-destructive" />
-    <p className="font-semibold">Failed to load VMs</p>
-    <p className="text-sm text-muted-foreground">{message}</p>
+    <AlertCircle className="mx-auto mb-3 text-red-400" />
+    <p className="font-semibold text-white">Failed to load VMs</p>
+    <p className="text-sm text-gray-400">{message}</p>
 
     <Button onClick={() => onRetry()} className="mt-4">
       <RefreshCw className="mr-1 h-4 w-4" />
@@ -147,7 +146,6 @@ const VirtualMachines = () => {
   const [confirmDelete, setConfirmDelete] = useState<VM | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  // ── Fetch ──
   const { data: vms, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["vms"],
     queryFn: fetchVMs,
@@ -156,7 +154,6 @@ const VirtualMachines = () => {
     refetchOnWindowFocus: false,
   });
 
-  // ── Toggle ──
   const toggleMutation = useMutation({
     mutationFn: toggleVMStatus,
     onMutate: async ({ id, status }) => {
@@ -185,7 +182,6 @@ const VirtualMachines = () => {
     },
   });
 
-  // ── Delete ──
   const deleteMutation = useMutation({
     mutationFn: deleteVM,
     onMutate: async (id) => {
@@ -217,7 +213,7 @@ const VirtualMachines = () => {
     return (
       <ErrorState
         message={(error as Error)?.message}
-        onRetry={() => refetch()} // ✅ FIXED
+        onRetry={() => refetch()}
       />
     );
 
@@ -233,8 +229,10 @@ const VirtualMachines = () => {
 
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex justify-between">
-          <h2 className="font-bold">VMs ({vms?.length ?? 0})</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold text-white">
+            Virtual Machines ({vms?.length ?? 0})
+          </h2>
 
           <div className="flex gap-2">
             <Button onClick={() => refetch()}>
@@ -252,11 +250,23 @@ const VirtualMachines = () => {
 
         {/* List */}
         {vms?.map((vm) => (
-          <div key={vm.id} className="flex justify-between border p-3 rounded">
+          <div
+            key={vm.id}
+            className="flex justify-between items-center border border-border bg-card p-4 rounded-lg hover:bg-muted/20 transition"
+          >
             <div>
-              <p>{vm.name}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-white font-semibold">{vm.name}</p>
+              <p className="text-sm text-gray-400">
                 {vm.cpu} • {vm.ram} • {vm.ip}
+              </p>
+              <p
+                className={`text-xs mt-1 ${
+                  vm.status === "running"
+                    ? "text-green-400"
+                    : "text-gray-500"
+                }`}
+              >
+                ● {vm.status}
               </p>
             </div>
 
@@ -268,7 +278,11 @@ const VirtualMachines = () => {
                   toggleMutation.mutate({ id: vm.id, status: vm.status })
                 }
               >
-                {vm.status === "running" ? <Square /> : <Play />}
+                {vm.status === "running" ? (
+                  <Square className="text-yellow-400" />
+                ) : (
+                  <Play className="text-green-400" />
+                )}
               </Button>
 
               <Button
@@ -276,7 +290,7 @@ const VirtualMachines = () => {
                 disabled={loadingId === vm.id}
                 onClick={() => setConfirmDelete(vm)}
               >
-                <Trash2 />
+                <Trash2 className="text-red-400" />
               </Button>
             </div>
           </div>
