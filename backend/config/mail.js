@@ -1,5 +1,5 @@
 const BREVO_API_KEY = process.env.BREVO_API_KEY || "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";
-const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || "noreply@yourdomain.com";
+const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || "gmass2439@gmail.com";
 const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || "VMS Admin";
 
 const sendViaBrevo = async ({ to, otp }) => {
